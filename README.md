@@ -9,4 +9,4 @@ health, habits, and personal inventory.
 - Frontend: Next.js / TypeScript / Tailwind CSS
 - Database: Azure SQL
 - Containers: Docker
-- CI/CD: GitHub Actionsgi
+- CI/CD: GitHub Actions
