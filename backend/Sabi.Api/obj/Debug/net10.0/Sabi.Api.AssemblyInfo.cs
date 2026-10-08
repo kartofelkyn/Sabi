@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Sabi.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e38880b7f8c76ab8f47ae27676902c17fa94c136")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9a4985440df26d3014ff7a55dd73e08efc7ea972")]
 [assembly: System.Reflection.AssemblyProductAttribute("Sabi.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Sabi.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
