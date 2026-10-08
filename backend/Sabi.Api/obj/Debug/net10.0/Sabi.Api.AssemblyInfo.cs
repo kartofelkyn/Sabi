@@ -10,10 +10,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("6d09d095-e094-49dc-93fd-d61128505c2c")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("Sabi.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9a4985440df26d3014ff7a55dd73e08efc7ea972")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+44dade2df2ce7f86b811a05873e3e95a4f78fe53")]
 [assembly: System.Reflection.AssemblyProductAttribute("Sabi.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Sabi.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

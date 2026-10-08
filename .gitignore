@@ -1,0 +1,15 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# .Net
+**/bin/
+**/obj/
+
+# Next.js
+**/.next/
+**/node_modules/
+
+# IDE
+.vs/
