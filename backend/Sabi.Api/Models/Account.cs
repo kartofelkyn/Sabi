@@ -7,5 +7,7 @@ namespace Sabi.Api.Models
         public decimal InitialBalance { get; set; }
         public string Currency { get; set; } = "PHP";
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public ICollection<Transaction> Transactions { get; set; }
+            = new List<Transaction>();
     }
 }
