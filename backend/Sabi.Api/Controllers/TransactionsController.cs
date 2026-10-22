@@ -23,9 +23,24 @@ public class TransactionsController : ControllerBase
         [FromQuery] int? categoryId,
         [FromQuery] TransactionType? type,
         [FromQuery] DateTime? startDate,
-        [FromQuery] DateTime? endDate
+        [FromQuery] DateTime? endDate,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10
     )
     {
+        // Early Validation Stopper
+        if ( page < 1 )
+        {
+            return BadRequest("Page must be greater than zero");
+        }
+        if ( pageSize < 1 )
+        {
+            return BadRequest("Page size must be greater than zero");
+        }
+        if ( pageSize > 100 )
+        {
+            return BadRequest("Page size must not exceed 100.");
+        }
         if (type.HasValue && !Enum.IsDefined(type.Value))
         {
             return BadRequest("Invalid transaction type.");
@@ -67,8 +82,16 @@ public class TransactionsController : ControllerBase
             query = query.Where(t => t.TransactionDate < exclusiveEnd);
         }
 
+        int totalCount = await query.CountAsync();
+
+        int totalPages = (int)Math.Ceiling(
+            (double) totalCount / pageSize
+        );
         var transactions = await query
             .OrderByDescending(t => t.TransactionDate)
+            .ThenByDescending(t => t.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(t => new TransactionResponseDto
             {
                 Id = t.Id,
@@ -82,7 +105,16 @@ public class TransactionsController : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(transactions);
+        var response = new PagedResponseDto<TransactionResponseDto>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = totalPages,
+            Data = transactions
+        };
+        
+        return Ok(response);
     }
 
     // Get: /api/transaction/{id}

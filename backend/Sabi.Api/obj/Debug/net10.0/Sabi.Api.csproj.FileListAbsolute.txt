@@ -166,3 +166,4 @@ F:\GitHub\Sabi\backend\Sabi.Api\bin\Debug\net10.0\runtimes\win-x86\native\msalru
 F:\GitHub\Sabi\backend\Sabi.Api\bin\Debug\net10.0\Swashbuckle.AspNetCore.Swagger.dll
 F:\GitHub\Sabi\backend\Sabi.Api\bin\Debug\net10.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 F:\GitHub\Sabi\backend\Sabi.Api\bin\Debug\net10.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+F:\GitHub\Sabi\backend\Sabi.Api\obj\Debug\net10.0\Sabi.Api.sourcelink.json
