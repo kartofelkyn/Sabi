@@ -29,15 +29,15 @@ public class TransactionsController : ControllerBase
     )
     {
         // Early Validation Stopper
-        if ( page < 1 )
+        if (page < 1)
         {
             return BadRequest("Page must be greater than zero");
         }
-        if ( pageSize < 1 )
+        if (pageSize < 1)
         {
             return BadRequest("Page size must be greater than zero");
         }
-        if ( pageSize > 100 )
+        if (pageSize > 100)
         {
             return BadRequest("Page size must not exceed 100.");
         }
@@ -85,7 +85,7 @@ public class TransactionsController : ControllerBase
         int totalCount = await query.CountAsync();
 
         int totalPages = (int)Math.Ceiling(
-            (double) totalCount / pageSize
+            (double)totalCount / pageSize
         );
         var transactions = await query
             .OrderByDescending(t => t.TransactionDate)
@@ -113,7 +113,7 @@ public class TransactionsController : ControllerBase
             TotalPages = totalPages,
             Data = transactions
         };
-        
+
         return Ok(response);
     }
 
@@ -187,6 +187,61 @@ public class TransactionsController : ControllerBase
             new { id = transaction.Id },
             ToResponseDto(transaction)
         );
+    }
+
+    // Put: /api/transactions/{id}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateTransaction(
+        int id,
+        [FromBody] UpdateTransactionDto dto
+    )
+    {
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (transaction == null)
+        {
+            return NotFound($"Transaction id {id} does not exist");
+        }
+
+        bool accountExists = await _context.Accounts
+            .AnyAsync(a => a.Id == dto.AccountId);
+
+        if (!accountExists)
+        {
+            return BadRequest("Account does not exist.");
+        }
+
+        var category = await _context.Categories
+            .FirstOrDefaultAsync(c => c.Id == dto.CategoryId);
+        if (category == null)
+        {
+            return BadRequest("Category does not exist.");
+        }
+        if (category.Type != dto.Type)
+        {
+            return BadRequest("Category type does not match transaction type.");
+        }
+        if (!dto.TransactionDate.HasValue)
+        {
+            return BadRequest("Transaction date is required.");
+        }
+        if (decimal.Round(dto.Amount, 2) != dto.Amount)
+        {
+            return BadRequest("Amount should only have 2 decimal places.");
+        }
+
+        // Update the existing transaction
+        transaction.AccountId = dto.AccountId;
+        transaction.CategoryId = dto.CategoryId;
+        transaction.Type = dto.Type;
+        transaction.Amount = dto.Amount;
+        transaction.Description = dto.Description;
+        transaction.TransactionDate = dto.TransactionDate.Value;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(ToResponseDto(transaction));
     }
 
     // Reusable mapping
