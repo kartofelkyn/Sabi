@@ -57,6 +57,7 @@ public class TransactionsController : ControllerBase
             return BadRequest("End date is out of supported range");
         }
         IQueryable<Transaction> query = _context.Transactions
+            .Where(t => t.IsDeleted == false)
             .AsNoTracking();
 
         if (accountId.HasValue)
@@ -87,6 +88,7 @@ public class TransactionsController : ControllerBase
         int totalPages = (int)Math.Ceiling(
             (double)totalCount / pageSize
         );
+
         var transactions = await query
             .OrderByDescending(t => t.TransactionDate)
             .ThenByDescending(t => t.Id)
@@ -123,7 +125,7 @@ public class TransactionsController : ControllerBase
     {
         var transaction = await _context.Transactions
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == id);
+            .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted);
 
         if (transaction == null)
         {
@@ -132,6 +134,7 @@ public class TransactionsController : ControllerBase
 
         return Ok(ToResponseDto(transaction));
     }
+
     // Post: /api/transactions
     [HttpPost]
     public async Task<IActionResult> CreateTransaction(
@@ -197,7 +200,7 @@ public class TransactionsController : ControllerBase
     )
     {
         var transaction = await _context.Transactions
-            .FirstOrDefaultAsync(t => t.Id == id);
+            .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted);
 
         if (transaction == null)
         {
@@ -214,6 +217,7 @@ public class TransactionsController : ControllerBase
 
         var category = await _context.Categories
             .FirstOrDefaultAsync(c => c.Id == dto.CategoryId);
+            
         if (category == null)
         {
             return BadRequest("Category does not exist.");
@@ -244,6 +248,26 @@ public class TransactionsController : ControllerBase
         return Ok(ToResponseDto(transaction));
     }
 
+    // Soft Delete: /api/transactions/{id}
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteTransaction(int id)
+    {
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted);
+        
+        if(transaction == null)
+        {
+            return NotFound($"Transaction does not exist");
+        }
+
+        // Mark as deleted
+        transaction.IsDeleted = true;
+        transaction.DeletedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
     // Reusable mapping
     private static TransactionResponseDto ToResponseDto(Transaction transaction)
     {
