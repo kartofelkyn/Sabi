@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Sabi.Api.Data;
 using Sabi.Api.DTOs;
 using Sabi.Api.Models;
-
+using Sabi.Api.Enums;
 namespace Sabi.Api.Controllers;
 
 [ApiController]
@@ -108,6 +108,7 @@ public class AccountsController : ControllerBase
         return Ok(account);
     }
 
+    // Delete: /api/accounts/1
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteAccount(int id)
     {
@@ -127,6 +128,49 @@ public class AccountsController : ControllerBase
         await _context.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    // Get: /api/accounts/{id}/balance
+    [HttpGet("{id}/balance")]
+    public async Task<IActionResult> GetAccountBalance(int id)
+    {
+        var account = await _context.Accounts
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id);
+        
+        if (account == null)
+        {
+            return NotFound("Account does not exist");
+        }
+
+        decimal totalIncome = await _context.Transactions
+            .Where(t =>
+                t.AccountId == id &&
+                t.Type == TransactionType.Income &&
+                !t.IsDeleted
+            )
+            .SumAsync(t => t.Amount);
+        
+        decimal totalExpenses = await _context.Transactions
+            .Where(t =>
+                t.AccountId == id &&
+                t.Type == TransactionType.Expense &&
+                !t.IsDeleted
+            )
+            .SumAsync(t => t.Amount);
+
+        decimal currentBalance = account.InitialBalance + totalIncome - totalExpenses;
+
+        var response = new AccountBalanceDto
+        {
+            AccountId = account.Id,
+            AccountName = account.Name,
+            InitialBalance = account.InitialBalance,
+            TotalIncome = totalIncome,
+            TotalExpenses = totalExpenses,
+            CurrentBalance = currentBalance
+        };
+        return Ok(response);
     }
 
 }
