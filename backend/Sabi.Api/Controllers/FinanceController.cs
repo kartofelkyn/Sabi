@@ -4,6 +4,7 @@ using Sabi.Api.Data;
 using Sabi.Api.Enums;
 using Sabi.Api.DTOs;
 using Sabi.Api.Models;
+using Sabi.Api.Services;
 namespace Sabi.Api.Controllers;
 
 [ApiController]
@@ -11,10 +12,17 @@ namespace Sabi.Api.Controllers;
 public class FinanceController : ControllerBase
 {
     private readonly SabiDbContext _context;
+    private readonly FinanceService _financeService;
 
-    public FinanceController(SabiDbContext context)
+    public FinanceController
+    (
+        SabiDbContext context,
+        FinanceService financeService
+    )
     {
         _context = context;
+        _financeService = financeService;
+
     }
 
     // Get: /api/Finance/summary
@@ -211,5 +219,12 @@ public class FinanceController : ControllerBase
             .ToList();
 
         return Ok(monthlyTrends);
+    }
+
+    [HttpGet("total-income")]
+    public async Task<IActionResult> GetTotalIncome()
+    {
+        decimal totalIncome = await _financeService.GetTotalIncomeAsync();
+        return Ok(totalIncome);
     }
 }

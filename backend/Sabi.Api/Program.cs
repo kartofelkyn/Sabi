@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Sabi.Api.Data;
+using Sabi.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,8 @@ builder.Services.AddOpenApi();
 
 // Register controllers
 builder.Services.AddControllers();
+// Register services
+builder.Services.AddScoped<FinanceService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
