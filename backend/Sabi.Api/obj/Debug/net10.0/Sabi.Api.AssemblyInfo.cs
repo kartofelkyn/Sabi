@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Sabi.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+68d977eb9c26c66cf8863f9cea39d91eadfb89e0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+57a7447be4b4e35e3b796a8d12e34c757dfe9e02")]
 [assembly: System.Reflection.AssemblyProductAttribute("Sabi.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Sabi.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
