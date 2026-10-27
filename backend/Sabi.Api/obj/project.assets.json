@@ -1138,7 +1138,7 @@
           "buildTransitive/net6.0/_._": {}
         }
       },
-      "System.Security.Cryptography.Pkcs/9.0.11": {
+      "System.Security.Cryptography.Pkcs/9.0.22": {
         "type": "package",
         "compile": {
           "lib/net9.0/System.Security.Cryptography.Pkcs.dll": {
@@ -3514,10 +3514,10 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "System.Security.Cryptography.Pkcs/9.0.11": {
-      "sha512": "YS2YqtN6fFjlTDIQI+ucjbbrEvwMn796r+VLTQRr/5Oy6g+i+m7nIou83KnJCnAcKna2I+5eVJRks6SoHSpetQ==",
+    "System.Security.Cryptography.Pkcs/9.0.22": {
+      "sha512": "pc/KIRHtCS2ZbS+LcdJARNCVOb5zKbD5700swUJr3IvQRQCxMIArW7P0I3qzfJlWtIlYscElEqb4tPmfD3Wa/A==",
       "type": "package",
-      "path": "system.security.cryptography.pkcs/9.0.11",
+      "path": "system.security.cryptography.pkcs/9.0.22",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -3542,7 +3542,7 @@
         "runtimes/win/lib/net8.0/System.Security.Cryptography.Pkcs.xml",
         "runtimes/win/lib/net9.0/System.Security.Cryptography.Pkcs.dll",
         "runtimes/win/lib/net9.0/System.Security.Cryptography.Pkcs.xml",
-        "system.security.cryptography.pkcs.9.0.11.nupkg.sha512",
+        "system.security.cryptography.pkcs.9.0.22.nupkg.sha512",
         "system.security.cryptography.pkcs.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -3587,7 +3587,8 @@
       "Microsoft.AspNetCore.OpenApi >= 10.0.3",
       "Microsoft.EntityFrameworkCore.Design >= 10.0.12",
       "Microsoft.EntityFrameworkCore.SqlServer >= 10.0.12",
-      "Swashbuckle.AspNetCore >= 10.3.0"
+      "Swashbuckle.AspNetCore >= 10.3.0",
+      "System.Security.Cryptography.Pkcs >= 9.0.22"
     ]
   },
   "packageFolders": {
@@ -3650,6 +3651,10 @@
           "Swashbuckle.AspNetCore": {
             "target": "Package",
             "version": "[10.3.0, )"
+          },
+          "System.Security.Cryptography.Pkcs": {
+            "target": "Package",
+            "version": "[9.0.22, )"
           }
         },
         "imports": [

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Sabi.Api.Tests/Sabi.Api.Tests.csproj" />
+  <Project Path="Sabi.Api/Sabi.Api.csproj" />
+</Solution>
