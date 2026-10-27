@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Sabi.Api.Enums;
 using Sabi.Api.DTOs;
 using Sabi.Api.Models;
+using Sabi.Api.DTO;
 
 public class FinanceService
 {
@@ -173,5 +174,33 @@ public class FinanceService
             .ToList();
 
         return monthlyTrends;
+    }
+
+    public async Task<DashboardResponseDto> GetDashboardAsync(int year)
+    {
+        if (year < 1 || year >= 9999)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(year),
+                "Dashboard year must be between 1 and 9998."
+            );
+        }
+        DateTime startDate = new DateTime(year, 1, 1);
+        DateTime endDate = new DateTime(year, 12, 31);
+
+        FinancialSummaryDto summary = await GetFinancialSummaryAsync(startDate, endDate);
+
+        List<CategoryExpenseDto> expensesByCategory = await GetExpensesByCategoryAsync(startDate, endDate);
+
+        List<MonthlyTrendDto> monthlyTrends = await GetMonthlyTrendsAsync(year);
+
+        var response = new DashboardResponseDto
+        {
+            Summary = summary,
+            ExpensesByCategory = expensesByCategory,
+            MonthlyTrends = monthlyTrends
+        };
+
+        return response;
     }
 }

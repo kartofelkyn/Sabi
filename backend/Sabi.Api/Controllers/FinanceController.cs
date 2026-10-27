@@ -96,6 +96,24 @@ public class FinanceController : ControllerBase
         return Ok(monthlyTrends);
     }
 
+    // Get: /api/finance/dashboard
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetDashboard(
+        [FromQuery] int? year
+    )
+    {
+        int selectedYear = year ?? DateTime.Now.Year;
+
+        if (selectedYear < 1 || selectedYear >= 9999)
+        {
+            return BadRequest("Dashboard year must be between 1 and 9998.");
+        }
+
+        var response = await _financeService.GetDashboardAsync(selectedYear);
+        
+        return Ok(response);
+    }
+    
     [HttpGet("total-income")]
     public async Task<IActionResult> GetTotalIncome()
     {
