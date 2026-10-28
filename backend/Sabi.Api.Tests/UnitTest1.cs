@@ -13,17 +13,10 @@ public class FinanceServiceTests
     [Fact]
     public async Task GetFinancialSummaryAsync_ShouldCalculateCorrectTotals()
     {
-        using var connection = new SqliteConnection("Data Source=:memory:");
+        var (connection, context) = await CreateTestDatabaseAsync();
 
-        await connection.OpenAsync();
-
-        var options = new DbContextOptionsBuilder<SabiDbContext>()
-            .UseSqlite(connection)
-            .Options;
-
-        using var context = new SabiDbContext(options);
-
-        await context.Database.EnsureCreatedAsync();
+        using var dbConnection = connection;
+        using var dbContext = context;
 
         var account = new Account
         {
@@ -111,5 +104,313 @@ public class FinanceServiceTests
         Assert.Equal(3000m, result.TotalExpenses);
         Assert.Equal(7000m, result.NetCashFlow);
         Assert.Equal(12000m, result.CombinedBalance);
+    }
+
+    [Fact]
+    public async Task GetFinancialSummaryAsync_ShouldFilterTransactionsByDate()
+    {
+        // Arrange
+        var (connection, context) = await CreateTestDatabaseAsync();
+
+        using var dbConnection = connection;
+        using var dbContext = context;
+
+        var account = new Account
+        {
+            Name = "Test Wallet",
+            InitialBalance = 5000m
+        };
+
+        context.Accounts.Add(account);
+
+        await context.SaveChangesAsync();
+
+        var incomeCategory = new Category
+        {
+            Name = "Salary",
+            Type = TransactionType.Income
+        };
+
+        var expenseCategory = new Category
+        {
+            Name = "Food",
+            Type = TransactionType.Expense
+        };
+
+        context.Categories.AddRange(incomeCategory, expenseCategory);
+
+        await context.SaveChangesAsync();
+
+        var transactions = new List<Transaction>
+        {
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = incomeCategory.Id,
+                Type = TransactionType.Income,
+                Amount = 10000m,
+                Description = "October Salary",
+                TransactionDate = new DateTime(2026, 10, 10)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = expenseCategory.Id,
+                Type = TransactionType.Expense,
+                Amount = 3000m,
+                Description = "Groceries",
+                TransactionDate = new DateTime(2026, 10, 15)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = incomeCategory.Id,
+                Type = TransactionType.Income,
+                Amount = 5000m,
+                Description = "November Bonus",
+                TransactionDate = new DateTime(2026, 11, 5)
+            }
+        };
+
+        context.Transactions.AddRange(transactions);
+
+        await context.SaveChangesAsync();
+
+        // Act
+        var financeService = new FinanceService(context);
+
+        var startDate = new DateTime(2026, 10, 1);
+        var endDate = new DateTime(2026, 10, 31);
+
+        var result = await financeService.GetFinancialSummaryAsync(
+            startDate,
+            endDate
+        );
+
+        // Assert
+        Assert.Equal(10000m, result.TotalIncome);
+        Assert.Equal(3000m, result.TotalExpenses);
+        Assert.Equal(7000m, result.NetCashFlow);
+        Assert.Equal(17000m, result.CombinedBalance);
+
+    }
+
+    [Fact]
+    public async Task GetFinancialSummaryAsync_ShouldIncludeTransactionsOnEndDate()
+    {
+        // Arrange
+        var (connection, context) = await CreateTestDatabaseAsync();
+
+        using var dbConnection = connection;
+        using var dbContext = context;
+
+        var account = new Account
+        {
+            Name = "Boundary Test Wallet",
+            InitialBalance = 0m
+        };
+
+        context.Accounts.Add(account);
+
+        await context.SaveChangesAsync();
+
+        var incomeCategory = new Category
+        {
+            Name = "Boundary Test Income",
+            Type = TransactionType.Income
+        };
+
+        context.Categories.Add(incomeCategory);
+
+        await context.SaveChangesAsync();
+
+        var transactions = new List<Transaction>
+        {
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = incomeCategory.Id,
+                Type = TransactionType.Income,
+                Amount = 2000m,
+                Description = "October End-of-Day Income",
+                TransactionDate = new DateTime(2026, 10, 31, 23, 59, 0)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = incomeCategory.Id,
+                Type = TransactionType.Income,
+                Amount = 1000m,
+                Description = "November Income",
+                TransactionDate = new DateTime(2026, 11, 1, 0, 0, 0)
+            }
+        };
+
+        context.Transactions.AddRange(transactions);
+
+        await context.SaveChangesAsync();
+
+        // Act
+        var financeService = new FinanceService(context);
+
+        var result = await financeService.GetFinancialSummaryAsync(
+            new DateTime(2026, 10, 1),
+            new DateTime(2026, 10, 31)
+        );
+
+        // Assert
+        // Assert
+        Assert.Equal(2000m, result.TotalIncome);
+        Assert.Equal(0m, result.TotalExpenses);
+        Assert.Equal(2000m, result.NetCashFlow);
+        Assert.Equal(3000m, result.CombinedBalance);
+    }
+
+    [Fact]
+    public async Task GetExpensesByCategoryAsync_ShouldGroupExpensesCorrectly()
+    {
+        // Arrange
+        var (connection, context) = await CreateTestDatabaseAsync();
+
+        using var dbConnection = connection;
+        using var dbContext = context;
+
+        var account = new Account
+        {
+            Name = "Expense Test Wallet",
+            InitialBalance = 10000m
+        };
+
+        context.Accounts.Add(account);
+
+        await context.SaveChangesAsync();
+
+        var foodCategory = new Category
+        {
+            Name = "Food",
+            Type = TransactionType.Expense
+        };
+        var transportationCategory = new Category
+        {
+            Name = "Transportation",
+            Type = TransactionType.Expense
+        };
+        var salaryCategory = new Category
+        {
+            Name = "Salary",
+            Type = TransactionType.Income
+        };
+
+        context.Categories.AddRange(foodCategory, transportationCategory, salaryCategory);
+
+        await context.SaveChangesAsync();
+
+        var transactions = new List<Transaction>
+        {
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = foodCategory.Id,
+                Type = TransactionType.Expense,
+                Amount = 500m,
+                Description = "Lunch",
+                TransactionDate = new DateTime(2026, 10, 28)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = foodCategory.Id,
+                Type = TransactionType.Expense,
+                Amount = 300m,
+                Description = "Dinner",
+                TransactionDate = new DateTime(2026, 10, 28)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = transportationCategory.Id,
+                Type = TransactionType.Expense,
+                Amount = 150m,
+                Description = "Jeepney",
+                TransactionDate = new DateTime(2026, 10, 28)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = transportationCategory.Id,
+                Type = TransactionType.Expense,
+                Amount = 100m,
+                Description = "Bus",
+                TransactionDate = new DateTime(2026, 10, 28)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = salaryCategory.Id,
+                Type = TransactionType.Income,
+                Amount = 10000m,
+                Description = "Monthly Salary",
+                TransactionDate = new DateTime(2026, 10, 28)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = foodCategory.Id,
+                Type = TransactionType.Expense,
+                Amount = 5000m,
+                Description = "Deleted Food Purchase",
+                TransactionDate = new DateTime(2026, 10, 28),
+                IsDeleted = true
+            }
+        };
+
+        context.Transactions.AddRange(transactions);
+
+        await context.SaveChangesAsync();
+
+        // Act
+        var financeService = new FinanceService(context);
+
+        var result = await financeService.GetExpensesByCategoryAsync(
+            null,
+            null
+        );
+
+        // Assert
+        Assert.Equal(2, result.Count);
+
+        var food = Assert.Single(result, x => x.CategoryName == "Food");
+        var transportation = Assert.Single(result, x => x.CategoryName == "Transportation");
+
+        Assert.Equal(800m, food.TotalAmount);
+        Assert.Equal(250m, transportation.TotalAmount);
+    }
+
+    [Fact]
+    public async Task GetMonthlyTrendsAsync_ShouldReturnAllTwelveMonths()
+    {
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    private static async Task<(SqliteConnection Connection, SabiDbContext Context)>
+    CreateTestDatabaseAsync()
+    {
+        var connection = new SqliteConnection("Data Source=:memory:");
+
+        await connection.OpenAsync();
+
+        var options = new DbContextOptionsBuilder<SabiDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        var context = new SabiDbContext(options);
+
+        await context.Database.EnsureCreatedAsync();
+
+        return (connection, context);
     }
 }
