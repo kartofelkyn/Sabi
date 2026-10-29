@@ -390,10 +390,292 @@ public class FinanceServiceTests
     public async Task GetMonthlyTrendsAsync_ShouldReturnAllTwelveMonths()
     {
         // Arrange
+        var (connection, context) = await CreateTestDatabaseAsync();
+
+        using var dbConnection = connection;
+        using var dbContext = context;
 
         // Act
+        var financeService = new FinanceService(context);
+
+        var result = await financeService.GetMonthlyTrendsAsync(2026);
 
         // Assert
+        Assert.Equal(12, result.Count);
+
+        for (int month = 1; month <= 12; month++)
+        {
+            var monthlyTrend = Assert.Single(result, x => x.Month == month);
+
+            Assert.Equal(2026, monthlyTrend.Year);
+            Assert.Equal(0m, monthlyTrend.TotalIncome);
+            Assert.Equal(0m, monthlyTrend.TotalExpenses);
+            Assert.Equal(0m, monthlyTrend.NetCashFlow);
+        }
+    }
+
+    [Fact]
+    public async Task GetMonthlyTrendsAsync_ShouldCalculateMonthlyTotals()
+    {
+        // Arrange
+        var (connection, context) = await CreateTestDatabaseAsync();
+        using var dbConnection = connection;
+        using var dbContext = context;
+
+        var account = new Account
+        {
+            Name = "Monthly Trends Wallet",
+            InitialBalance = 0m
+        };
+
+        context.Accounts.Add(account);
+
+        await context.SaveChangesAsync();
+
+        var incomeCategory = new Category
+        {
+            Name = "Salary",
+            Type = TransactionType.Income
+        };
+        var expenseCategory = new Category
+        {
+            Name = "Food",
+            Type = TransactionType.Expense
+        };
+
+        context.Categories.AddRange(incomeCategory, expenseCategory);
+
+        await context.SaveChangesAsync();
+
+        var transactions = new List<Transaction>
+        {
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = incomeCategory.Id,
+                Type = TransactionType.Income,
+                Amount = 10000m,
+                Description = "January Salary",
+                TransactionDate = new DateTime(2026, 1, 10)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = expenseCategory.Id,
+                Type = TransactionType.Expense,
+                Amount = 3000m,
+                Description = "January Food",
+                TransactionDate = new DateTime(2026, 1, 15)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = incomeCategory.Id,
+                Type = TransactionType.Income,
+                Amount = 15000m,
+                Description = "February Salary",
+                TransactionDate = new DateTime(2026, 2, 10)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = expenseCategory.Id,
+                Type = TransactionType.Expense,
+                Amount = 5000m,
+                Description = "February Food",
+                TransactionDate = new DateTime(2026, 2, 15)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = incomeCategory.Id,
+                Type = TransactionType.Income,
+                Amount = 50000m,
+                Description = "December 2025 Salary",
+                TransactionDate = new DateTime(2025, 12, 15)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = expenseCategory.Id,
+                Type = TransactionType.Expense,
+                Amount = 9000m,
+                Description = "Deleted January Expense",
+                TransactionDate = new DateTime(2026, 1, 20),
+                IsDeleted = true
+            },
+        };
+
+        context.Transactions.AddRange(transactions);
+
+        await context.SaveChangesAsync();
+
+        // Act
+        var financeService = new FinanceService(context);
+
+        var result = await financeService.GetMonthlyTrendsAsync(2026);
+
+        // Assert
+        Assert.Equal(12, result.Count);
+
+        for (int month = 1; month <= 12; month++)
+        {
+            var monthlyTrend = Assert.Single(result, x => x.Month == month);
+
+            Assert.Equal(2026, monthlyTrend.Year);
+
+            if (month == 1)
+            {
+                Assert.Equal(10000m, monthlyTrend.TotalIncome);
+                Assert.Equal(3000m, monthlyTrend.TotalExpenses);
+                Assert.Equal(7000m, monthlyTrend.NetCashFlow);
+            }
+            else if (month == 2)
+            {
+                Assert.Equal(15000m, monthlyTrend.TotalIncome);
+                Assert.Equal(5000m, monthlyTrend.TotalExpenses);
+                Assert.Equal(10000m, monthlyTrend.NetCashFlow);
+            }
+            else
+            {
+                Assert.Equal(0m, monthlyTrend.TotalIncome);
+                Assert.Equal(0m, monthlyTrend.TotalExpenses);
+                Assert.Equal(0m, monthlyTrend.NetCashFlow);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task GetDashboardAsync_ShouldReturnCompleteDashboard()
+    {
+        // Arrange
+        var (connection, context) = await CreateTestDatabaseAsync();
+
+        using var dbConnection = connection;
+        using var dbContext = context;
+
+        // Act
+        var financeService = new FinanceService(context);
+
+        var result = await financeService.GetDashboardAsync(2026);
+
+        // Assert
+        Assert.NotNull(result);
+
+        Assert.Equal(0m, result.Summary.TotalIncome);
+        Assert.Equal(0m, result.Summary.TotalExpenses);
+        Assert.Equal(0m, result.Summary.NetCashFlow);
+        Assert.Equal(0m, result.Summary.CombinedBalance);
+
+        Assert.Empty(result.ExpensesByCategory);
+
+        Assert.Equal(12, result.MonthlyTrends.Count);
+    }
+
+    [Fact]
+    public async Task GetDashboardAsync_ShouldReturnConsistentFinancialData()
+    {
+        // Arrange
+        var (connection, context) = await CreateTestDatabaseAsync();
+
+        using var dbConnection = connection;
+        using var dbContext = context;
+
+        var account = new Account
+        {
+            Name = "Dashboard Test Wallet",
+            InitialBalance = 5000m
+        };
+
+        context.Accounts.Add(account);
+
+        await context.SaveChangesAsync();
+
+        var incomeCategory = new Category
+        {
+            Name = "Salary",
+            Type = TransactionType.Income
+        };
+        var expenseCategory = new Category
+        {
+            Name = "Food",
+            Type = TransactionType.Expense
+        };
+
+        context.Categories.AddRange(incomeCategory, expenseCategory);
+
+        await context.SaveChangesAsync();
+
+        var transactions = new List<Transaction>
+        {
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = incomeCategory.Id,
+                Type = TransactionType.Income,
+                Amount = 10000m,
+                Description = "January Salary",
+                TransactionDate = new DateTime(2026, 1, 10)
+            },
+            new Transaction
+            {
+                AccountId = account.Id,
+                CategoryId = expenseCategory.Id,
+                Type = TransactionType.Expense,
+                Amount = 2000m,
+                Description = "January Food",
+                TransactionDate = new DateTime(2026, 1, 15)
+            }
+        };
+
+        context.Transactions.AddRange(transactions);
+
+        await context.SaveChangesAsync();
+
+        // Act
+        var financeService = new FinanceService(context);
+
+        var result = await financeService.GetDashboardAsync(2026);
+
+        // Assert
+        Assert.NotNull(result);
+
+        Assert.Equal(10000m, result.Summary.TotalIncome);
+        Assert.Equal(2000m, result.Summary.TotalExpenses);
+        Assert.Equal(8000m, result.Summary.NetCashFlow);
+        Assert.Equal(13000m, result.Summary.CombinedBalance);
+
+        // Expense check
+        var foodExpense = Assert.Single(result.ExpensesByCategory);
+
+        Assert.Equal("Food", foodExpense.CategoryName);
+        Assert.Equal(2000m, foodExpense.TotalAmount);
+        Assert.Equal(expenseCategory.Id, foodExpense.CategoryId);
+
+        // Monthly trends check
+        var monthlyTrends = result.MonthlyTrends;
+
+        Assert.Equal(12, monthlyTrends.Count);
+
+        for (int month = 1; month <= 12; month++)
+        {
+            var monthlyTrend = Assert.Single(monthlyTrends, x => x.Month == month);
+
+            Assert.Equal(2026, monthlyTrend.Year);
+
+            if (month == 1)
+            {
+                Assert.Equal(10000m, monthlyTrend.TotalIncome);
+                Assert.Equal(2000m, monthlyTrend.TotalExpenses);
+                Assert.Equal(8000m, monthlyTrend.NetCashFlow);
+            }
+            else
+            {
+                Assert.Equal(0m, monthlyTrend.TotalIncome);
+                Assert.Equal(0m, monthlyTrend.TotalExpenses);
+                Assert.Equal(0m, monthlyTrend.NetCashFlow);
+            }
+        }
     }
 
     private static async Task<(SqliteConnection Connection, SabiDbContext Context)>
