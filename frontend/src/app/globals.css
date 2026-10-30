@@ -19,6 +19,89 @@
   }
 }
 
+
+/* LIGHT MODE - Forest Green */
+:root,
+[data-theme="light"]
+{
+  --background: #f7f9f5;
+  --foreground: #25372c;
+
+  --sidebar: #193d2b;
+  --sidebar-foreground: #f4f7f2;
+  --sidebar-hover: #28543d;
+  --sidebar-active: #346b4a;
+
+  --topbar: #ffffff;
+  --card: #ffffff;
+  --card-hover: #f0f4ef;
+
+  --primary: #346b4a;
+  --primary-foreground: #ffffff;
+  --muted-foreground: #596b60;
+  --border: #dce5db;
+}
+
+/* NEUTRAL MODE: Sage & Stone */
+[data-theme="neutral"] {
+  --background: #f1f0ea;
+  --foreground: #343c35;
+
+  --sidebar: #e4e8de;
+  --sidebar-foreground: #343c35;
+  --sidebar-hover: #d3dccf;
+  --sidebar-active: #c1d0be;
+
+  --topbar: #f8f7f2;
+  --card: #fcfbf7;
+  --card-hover: #f0efe8;
+
+  --primary: #526f5a;
+  --primary-foreground: #ffffff;
+  --muted-foreground: #606e61;
+  --border: #d5dbd1;
+}
+
+/* DARK — French Navy */
+[data-theme="dark"] {
+  --background: #101827;
+  --foreground: #eaf0f8;
+
+  --sidebar: #192d4a;
+  --sidebar-foreground: #eaf0f8;
+  --sidebar-hover: #29466c;
+  --sidebar-active: #365a86;
+
+  --topbar: #19283e;
+  --card: #20334d;
+  --card-hover: #29415f;
+
+  --primary: #88aee0;
+  --primary-foreground: #101827;
+  --muted-foreground: #b2c1d5;
+  --border: #364b65;
+}
+
+/* Expose CSS variables as Tailwind utilities */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-active: var(--sidebar-active);
+
+  --color-topbar: var(--topbar);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
