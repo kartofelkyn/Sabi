@@ -1,7 +1,6 @@
-
 import { ThemeProvider } from "@/providers/ThemeProvider";
-import "./globals.css";
 import Script from "next/script";
+import "./globals.css";
 
 const themeScript = `
 (function () {
@@ -27,16 +26,22 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html className="h-full" lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className="h-full"
+      suppressHydrationWarning
+    >
       <head>
         <Script
           id="theme-init"
           strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: themeScript }}
+          dangerouslySetInnerHTML={{
+            __html: themeScript,
+          }}
         />
       </head>
 
-      <body className="min-h-full flex flex-col">
+      <body className="flex min-h-screen flex-col">
         <ThemeProvider>
           {children}
         </ThemeProvider>
