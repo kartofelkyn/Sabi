@@ -13,6 +13,7 @@ namespace Sabi.Api.Data
         public DbSet<Account> Accounts => Set<Account>();
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Transaction> Transactions => Set<Transaction>();
+        public DbSet<NavItem> NavItems => Set<NavItem>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Account>(entity =>
@@ -41,23 +42,29 @@ namespace Sabi.Api.Data
             });
 
             modelBuilder.Entity<Transaction>(entity =>
-           {
+            {
                entity.Property(t => t.Amount)
-                   .HasPrecision(18, 2);
+                    .HasPrecision(18, 2);
 
                entity.Property(t => t.Description)
-                   .HasMaxLength(500);
+                    .HasMaxLength(500);
 
                entity.HasOne(t => t.Account)
-                   .WithMany(a => a.Transactions)
-                   .HasForeignKey(t => t.AccountId)
-                   .OnDelete(DeleteBehavior.Restrict);
+                    .WithMany(a => a.Transactions)
+                    .HasForeignKey(t => t.AccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
                entity.HasOne(t => t.Category)
-                   .WithMany(c => c.Transactions)
-                   .HasForeignKey(t => t.CategoryId)
-                   .OnDelete(DeleteBehavior.Restrict);
-           });
+                    .WithMany(c => c.Transactions)
+                    .HasForeignKey(t => t.CategoryId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<NavItem>()
+                .HasOne(n => n.Parent)
+                .WithMany(n => n.Children)
+                .HasForeignKey(n => n.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

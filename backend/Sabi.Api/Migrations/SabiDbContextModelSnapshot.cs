@@ -79,6 +79,48 @@ namespace Sabi.Api.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("Sabi.Api.Models.NavItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Path")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("NavItems");
+                });
+
             modelBuilder.Entity("Sabi.Api.Models.Transaction", b =>
                 {
                     b.Property<int>("Id")
@@ -126,6 +168,16 @@ namespace Sabi.Api.Migrations
                     b.ToTable("Transactions");
                 });
 
+            modelBuilder.Entity("Sabi.Api.Models.NavItem", b =>
+                {
+                    b.HasOne("Sabi.Api.Models.NavItem", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+                });
+
             modelBuilder.Entity("Sabi.Api.Models.Transaction", b =>
                 {
                     b.HasOne("Sabi.Api.Models.Account", "Account")
@@ -153,6 +205,11 @@ namespace Sabi.Api.Migrations
             modelBuilder.Entity("Sabi.Api.Models.Category", b =>
                 {
                     b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("Sabi.Api.Models.NavItem", b =>
+                {
+                    b.Navigation("Children");
                 });
 #pragma warning restore 612, 618
         }

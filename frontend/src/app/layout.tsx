@@ -1,5 +1,4 @@
 import { ThemeProvider } from "@/providers/ThemeProvider";
-import Script from "next/script";
 import "./globals.css";
 
 const themeScript = `
@@ -32,16 +31,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: themeScript,
-          }}
-        />
+
       </head>
 
       <body className="flex min-h-screen flex-col">
+
         <ThemeProvider>
           {children}
         </ThemeProvider>
