@@ -25,9 +25,9 @@ export default function ThemeSwitcher() {
         focus-visible:outline-primary
       "
     >
-      <option value="light">Light — Forest Green</option>
-      <option value="neutral">Neutral — Sage & Stone</option>
-      <option value="dark">Dark — French Navy</option>
+      <option value="light">Light</option>
+      <option value="neutral">Neutral</option>
+      <option value="dark">Dark</option>
     </select>
   );
 }

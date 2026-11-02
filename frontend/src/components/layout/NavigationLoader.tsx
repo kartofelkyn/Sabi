@@ -1,8 +1,16 @@
 import { getNavItems } from "@/services/navigation.service";
-import Sidebar from "./Sidebar";
+import MainLayout from "./MainLayout";
 
-export default async function NavigationLoader() {
+export default async function NavigationLoader({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const navItems = await getNavItems();
 
-  return <Sidebar navItems={navItems} />;
+  return (
+    <MainLayout navItems={navItems}>
+      {children}
+    </MainLayout>
+  );
 }

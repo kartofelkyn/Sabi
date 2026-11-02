@@ -1,69 +1,79 @@
 @import "tailwindcss";
 
-/* LIGHT MODE - Forest Green */
+/* LIGHT - Forest Green accent, dark neutral sidebar */
 :root,
-[data-theme="light"]
-{
-  --background: #f7f9f5;
-  --foreground: #25372c;
+[data-theme="light"] {
+  --background: #f3f5f3;
+  --foreground: #1f2a24;
 
-  --sidebar: #193d2b;
-  --sidebar-foreground: #f4f7f2;
-  --sidebar-hover: #28543d;
-  --sidebar-active: #346b4a;
+  --sidebar: #1c2220;
+  --sidebar-foreground: #9aa6a0;
+  --sidebar-hover: #262e2b;
+  --sidebar-active: #2f3935;
+  --sidebar-active-foreground: #f2f5f3;
+  --sidebar-border: #2a322f;
+  --sidebar-indicator: #5fb283;
 
   --topbar: #ffffff;
   --card: #ffffff;
   --card-hover: #f0f4ef;
 
-  --primary: #346b4a;
+  --primary: #2f6a47;
   --primary-foreground: #ffffff;
   --muted-foreground: #596b60;
-  --border: #dce5db;
+  --border: #e0e6e1;
 }
 
-/* NEUTRAL MODE: Sage & Stone */
+/* NEUTRAL - slate sidebar, light gray page, white cards (from reference) */
 [data-theme="neutral"] {
-  --background: #f1f0ea;
-  --foreground: #343c35;
+  --background: #eef0f2;
+  --foreground: #1f2933;
 
-  --sidebar: #e4e8de;
-  --sidebar-foreground: #343c35;
-  --sidebar-hover: #d3dccf;
-  --sidebar-active: #c1d0be;
+  --sidebar: #1e252e;
+  --sidebar-foreground: #8a949f;
+  --sidebar-hover: #293038;
+  --sidebar-active: #333e4a;
+  --sidebar-active-foreground: #f2f3f4;
+  --sidebar-border: #2c323b;
+  --sidebar-indicator: #7ea8c9;
 
-  --topbar: #f8f7f2;
-  --card: #fcfbf7;
-  --card-hover: #f0efe8;
+  --topbar: #ffffff;
+  --card: #ffffff;
+  --card-hover: #f5f7f9;
 
-  --primary: #526f5a;
+  --primary: #3d7ba8;
   --primary-foreground: #ffffff;
-  --muted-foreground: #606e61;
-  --border: #d5dbd1;
+  --muted-foreground: #616e7c;
+  --border: #dfe3e8;
 }
 
-/* DARK — French Navy */
+/* DARK - GitHub dark */
 [data-theme="dark"] {
-  --background: #101827;
-  --foreground: #eaf0f8;
+  --background: #0d1117;
+  --foreground: #e6edf3;
 
-  --sidebar: #192d4a;
-  --sidebar-foreground: #eaf0f8;
-  --sidebar-hover: #29466c;
-  --sidebar-active: #365a86;
+  --sidebar: #010409;
+  --sidebar-foreground: #8b949e;
+  --sidebar-hover: #161b22;
+  --sidebar-active: #21262d;
+  --sidebar-active-foreground: #e6edf3;
+  --sidebar-border: #21262d;
+  --sidebar-indicator: #2f81f7;
 
-  --topbar: #19283e;
-  --card: #20334d;
-  --card-hover: #29415f;
+  --topbar: #161b22;
+  --card: #161b22;
+  --card-hover: #1c2128;
 
-  --primary: #88aee0;
-  --primary-foreground: #101827;
-  --muted-foreground: #b2c1d5;
-  --border: #364b65;
+  --primary: #2f81f7;
+  --primary-foreground: #ffffff;
+  --muted-foreground: #8b949e;
+  --border: #30363d;
 }
 
 /* Expose CSS variables as Tailwind utilities */
 @theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
@@ -71,6 +81,9 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-hover: var(--sidebar-hover);
   --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-indicator: var(--sidebar-indicator);
 
   --color-topbar: var(--topbar);
   --color-card: var(--card);
@@ -85,5 +98,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
