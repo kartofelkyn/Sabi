@@ -13,3 +13,4 @@
 
 # IDE
 .vs/
+/backend/Sabi.Api/obj
