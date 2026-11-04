@@ -26,15 +26,13 @@ export default function TopNav({
         <h1 className="text-xl font-semibold">
           {currentItem?.label ?? "Sabi"}
         </h1>
-        {/* focus:outline-none
-                focus:ring
-                focus:border-blue-300 */}
         <p className="text-xs text-muted-foreground">
           {currentItem?.description ?? ""}
         </p>
       </div>
       <div className="flex flex-row gap-4 px-6 justify-between border-l border-border">
         <SearchBar className="w-100 h-9" />
+        <ThemeSwitcher/>
         <div className="flex flex-row gap-2">
           <ExportButton />
           <NotificationButton />

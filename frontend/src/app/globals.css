@@ -1,3 +1,4 @@
+
 @import "tailwindcss";
 
 /* LIGHT - Forest Green accent, dark neutral sidebar */
@@ -15,8 +16,11 @@
   --sidebar-indicator: #5fb283;
 
   --topbar: #ffffff;
+
   --card: #ffffff;
-  --card-hover: #f0f4ef;
+  --card-foreground: #1f2a24;
+  --card-secondary: #e6ede7;
+  --card-hover: #dce7de;
 
   --primary: #2f6a47;
   --primary-foreground: #ffffff;
@@ -24,7 +28,7 @@
   --border: #e0e6e1;
 }
 
-/* NEUTRAL - slate sidebar, light gray page, white cards (from reference) */
+/* NEUTRAL - Slate sidebar, light gray page, white cards */
 [data-theme="neutral"] {
   --background: #eef0f2;
   --foreground: #1f2933;
@@ -38,8 +42,11 @@
   --sidebar-indicator: #7ea8c9;
 
   --topbar: #ffffff;
+
   --card: #ffffff;
-  --card-hover: #f5f7f9;
+  --card-foreground: #1f2933;
+  --card-secondary: #e5e9ee;
+  --card-hover: #dce3ea;
 
   --primary: #3d7ba8;
   --primary-foreground: #ffffff;
@@ -61,8 +68,11 @@
   --sidebar-indicator: #2f81f7;
 
   --topbar: #161b22;
+
   --card: #161b22;
-  --card-hover: #1c2128;
+  --card-foreground: #e6edf3;
+  --card-secondary: #21262d;
+  --card-hover: #30363d;
 
   --primary: #2f81f7;
   --primary-foreground: #ffffff;
@@ -86,7 +96,10 @@
   --color-sidebar-indicator: var(--sidebar-indicator);
 
   --color-topbar: var(--topbar);
+
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-card-secondary: var(--card-secondary);
   --color-card-hover: var(--card-hover);
 
   --color-primary: var(--primary);
