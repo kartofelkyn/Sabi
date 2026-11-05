@@ -15,8 +15,11 @@
   --sidebar-indicator: #5fb283;
 
   --topbar: #ffffff;
+
   --card: #ffffff;
-  --card-hover: #f0f4ef;
+  --card-foreground: #1f2a24;
+  --card-secondary: #e6ede7;
+  --card-hover: #dce7de;
 
   --primary: #2f6a47;
   --primary-foreground: #ffffff;
@@ -24,7 +27,7 @@
   --border: #e0e6e1;
 }
 
-/* NEUTRAL - slate sidebar, light gray page, white cards (from reference) */
+/* NEUTRAL - Slate sidebar, light gray page, white cards */
 [data-theme="neutral"] {
   --background: #eef0f2;
   --foreground: #1f2933;
@@ -38,8 +41,11 @@
   --sidebar-indicator: #7ea8c9;
 
   --topbar: #ffffff;
+
   --card: #ffffff;
-  --card-hover: #f5f7f9;
+  --card-foreground: #1f2933;
+  --card-secondary: #e5e9ee;
+  --card-hover: #dce3ea;
 
   --primary: #3d7ba8;
   --primary-foreground: #ffffff;
@@ -61,8 +67,11 @@
   --sidebar-indicator: #2f81f7;
 
   --topbar: #161b22;
+
   --card: #161b22;
-  --card-hover: #1c2128;
+  --card-foreground: #e6edf3;
+  --card-secondary: #21262d;
+  --card-hover: #30363d;
 
   --primary: #2f81f7;
   --primary-foreground: #ffffff;
@@ -86,13 +95,52 @@
   --color-sidebar-indicator: var(--sidebar-indicator);
 
   --color-topbar: var(--topbar);
+
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-card-secondary: var(--card-secondary);
   --color-card-hover: var(--card-hover);
 
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --chart-income: #16a34a;
+  --chart-expenses: #dc2626;
+  --chart-1: #2f6a47;
+  --chart-2: #77a98a;
+  --chart-3: #d5a65b;
+  --chart-4: #638ca8;
+  --chart-5: #aa7895;
+  --chart-6: #94a59b;
+}
+
+/* Neutral theme */
+[data-theme="neutral"] {
+  --chart-income: #15803d;
+  --chart-expenses: #b45309;
+  --chart-1: #536b60;
+  --chart-2: #a58a68;
+  --chart-3: #8b9b86;
+  --chart-4: #b67c6a;
+  --chart-5: #7c8ca3;
+  --chart-6: #b1a3a0;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --chart-income: #4ade80;
+  --chart-expenses: #fb7185;
+  --chart-1: #60a5fa;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #f472b6;
+  --chart-5: #a78bfa;
+  --chart-6: #94a3b8;
 }
 
 body {

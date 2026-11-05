@@ -26,9 +26,6 @@ export default function TopNav({
         <h1 className="text-xl font-semibold">
           {currentItem?.label ?? "Sabi"}
         </h1>
-        {/* focus:outline-none
-                focus:ring
-                focus:border-blue-300 */}
         <p className="text-xs text-muted-foreground">
           {currentItem?.description ?? ""}
         </p>
@@ -38,6 +35,7 @@ export default function TopNav({
         <div className="flex flex-row gap-2">
           <ExportButton />
           <NotificationButton />
+          <ThemeSwitcher />
         </div>
       </div>
       <div className="flex flex-row gap-2 justify-start border-l border-border pl-5 px-6">

@@ -23,6 +23,17 @@ builder.Services.AddDbContext<SabiDbContext>(options =>
     )
 );
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSabiFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+
 var app = builder.Build();
 
 
@@ -44,6 +55,13 @@ app.MapGet("/api/status", () =>
         status = "Running"
     };
 });
+// Cors
+
+app.UseRouting();
+
+app.UseCors("AllowSabiFrontend");
+
+app.UseAuthorization();
 
 // Register controller routes
 app.MapControllers();
