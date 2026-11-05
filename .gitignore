@@ -16,3 +16,4 @@
 .vscode/
 *.user
 *.suo
+/backend/Sabi.Api/obj
