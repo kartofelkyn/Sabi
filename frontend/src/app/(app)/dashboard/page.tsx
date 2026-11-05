@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react";
 import SummaryCard from "@/components/dashboard/SummaryCard";
-import type { FinanceSummary } from "@/types/finance/FinanceSummary";
-import { getFinanceSummary } from "@/services/finance.service";
+
+import type { FinanceDashboard } from "@/types/finance/FinanceDashboard";
+import { getFinanceDashboard } from "@/services/finance.service";
+
+import MonthlyTrendsChart from "@/components/dashboard/MonthlyTrendsChart";
+
+import ExpenseBreakdownChart from "@/components/dashboard/ExpenseBreakdownChart";
 
 export default function DashboardHome() {
   const Name = "Warren"; // Change later after login feature
@@ -32,9 +37,17 @@ export default function DashboardHome() {
     setGreeting(message);
   }, []);
 
-  const [summary, setSummary] = useState<FinanceSummary | null>(null);
+  const [dashboard, setDashboard] = useState<FinanceDashboard | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const getDisplayValue = (amount?: number): string => {
+    if (isLoading) return "Loading...";
+    if (error || amount === undefined) return "Unavailable";
+
+    return formatCurrency(amount);
+  };
 
   useEffect(() => {
     let isActive = true;
@@ -44,10 +57,10 @@ export default function DashboardHome() {
         setIsLoading(true);
         setError(null);
 
-        const data = await getFinanceSummary();
+        const data = await getFinanceDashboard(2026);
 
         if (isActive) {
-          setSummary(data);
+          setDashboard(data);
         }
       } catch (error) {
         if (isActive) {
@@ -72,51 +85,32 @@ export default function DashboardHome() {
   }, []);
 
   useEffect(() => {
-    console.log("Finance Summary:", summary);
-  }, [summary]);
+    console.log("Finance Dashboard:", dashboard);
+  }, [dashboard]);
 
   const summaryCards = [
     {
       title: "Available Balance",
-      value: isLoading ? "Loading..."
-      : error
-        ? "Unavailable"
-        : summary 
-          ? formatCurrency(summary?.combinedBalance) : 
-          "Unavailable",
-      description: "Net Worth across all"
+      value: getDisplayValue(dashboard?.summary.combinedBalance),
+      description: "Combined balance across accounts",
     },
     {
-      title: "Monthly Income",
-      value: isLoading ? "Loading..."
-      : error
-        ? "Unavailable"
-        : summary 
-          ? formatCurrency(summary?.totalIncome) : 
-          "Unavailable",
-      description: "Total Income"
+      title: "Total Income",
+      value: getDisplayValue(dashboard?.summary.totalIncome),
+      description: "Total Income",
     },
     {
-      title: "Monthly Expenses",
-      value: isLoading ? "Loading..."
-      : error
-        ? "Unavailable"
-        : summary 
-          ? formatCurrency(summary?.totalExpenses) : 
-          "Unavailable",
-      description: "Total Expenses"
+      title: "Total Expenses",
+      value: getDisplayValue(dashboard?.summary.totalExpenses),
+      description: "Total Expenses",
     },
     {
       title: "Net Cash Flow",
-      value: isLoading ? "Loading..."
-      : error
-        ? "Unavailable"
-        : summary 
-          ? formatCurrency(summary?.netCashFlow) : 
-          "Unavailable",
-      description: "Net cash flow"
+      value: getDisplayValue(dashboard?.summary.netCashFlow),
+      description: "Net cash flow",
     },
-  ]
+  ];
+
   return (
     <div className="main-dashboard-page flex flex-col gap-3">
       <section className="header w-full min-h-16 flex flex-wrap gap-3 justify-between px-6 py-4 items-center bg-card/90 rounded-md border border-border">
@@ -140,7 +134,7 @@ export default function DashboardHome() {
           <option value="daily">Daily</option>
         </select>
       </section>
-      <section className="main-cards w-full px-4 py-4 grid grid-cols-1 gap-4 md:grid-cols-2 rounded-md bg-card/90">
+      <section className="main-cards w-full px-4 py-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 rounded-md bg-card/90">
         {summaryCards.map((card) => (
           <SummaryCard
             key={card.title}
@@ -150,10 +144,47 @@ export default function DashboardHome() {
           />
         ))}
       </section>
-      <section className="monthly-trends w-full h-64 bg-card/90 rounded-md">
-        <h2 className="text-base font-semibold text-foreground">
-          Monthly Trends
-        </h2>
+      <section className="analytics grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-card/90 rounded-md min-h-64 p-4">
+          <h2 className="text-base font-semibold text-foreground mb-4">
+            Monthly Trends
+          </h2>
+
+          {isLoading ? (
+            <p className="text-muted-foreground">
+              Loading chart...
+            </p>
+          ) : error ? (
+            <p className="text-muted-foreground">
+              Unable to load monthly trends.
+            </p>
+          ) : dashboard ? (
+            <MonthlyTrendsChart data={dashboard.monthlyTrends} />
+          ) : (
+            <p className="text-muted-foreground">
+              No monthly trends available.
+            </p>
+          )}
+        </div>
+
+        <div className="bg-card/90 rounded-md min-h-64 p-4">
+          <h2 className="text-base font-semibold text-foreground">
+            Expense Breakdown
+          </h2>
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">
+              Loading expenses...
+            </p>
+          ) : error ? (
+            <p className="text-sm text-muted-foreground">
+              Unable to load expense breakdown.
+            </p>
+          ) : dashboard ? (
+            <ExpenseBreakdownChart
+              data={dashboard.expensesByCategory}
+            />
+          ) : null}
+        </div>
       </section>
     </div>
   )

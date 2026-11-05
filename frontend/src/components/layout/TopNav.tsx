@@ -32,10 +32,10 @@ export default function TopNav({
       </div>
       <div className="flex flex-row gap-4 px-6 justify-between border-l border-border">
         <SearchBar className="w-100 h-9" />
-        <ThemeSwitcher/>
         <div className="flex flex-row gap-2">
           <ExportButton />
           <NotificationButton />
+          <ThemeSwitcher />
         </div>
       </div>
       <div className="flex flex-row gap-2 justify-start border-l border-border pl-5 px-6">
