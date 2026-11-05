@@ -61,7 +61,7 @@ export default function SideBar({ navItems }: SidebarProps) {
                 <Link
                     key="settings"
                     href="/settings"
-                    className="relative items-center flex flex-row rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-sidebar-hover hover:text-sidebar-active-foreground"
+                    className="relative w-full items-center flex flex-row rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-sidebar-hover hover:text-sidebar-active-foreground"
                 >
                     <Settings size={18} />
                     {!isCollapsed && <span className="ml-2">Settings</span>}
@@ -69,7 +69,7 @@ export default function SideBar({ navItems }: SidebarProps) {
                 <Link
                     key="logout"
                     href="/logout"
-                    className="relative items-center flex flex-row rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-sidebar-hover hover:text-sidebar-active-foreground"
+                    className="relative w-full items-center flex flex-row rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-sidebar-hover hover:text-sidebar-active-foreground"
                 >
                     <LogOut size={18} />
                     {!isCollapsed && <span className="ml-2">Logout</span>}

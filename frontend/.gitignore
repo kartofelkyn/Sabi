@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# .Net
+**/bin/
+**/obj/
+
+# IDE
+.vs/
+/backend/Sabi.Api/obj
+.vscode/
+*.user
+*.suo

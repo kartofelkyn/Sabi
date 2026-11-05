@@ -46,7 +46,7 @@ export default function ExportButton({
                 aria-hidden="true"
             />
 
-            <span>Export</span>
+            <span className="hidden lg:inline">Export</span>
         </button>
     );
 }

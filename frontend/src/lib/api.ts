@@ -6,9 +6,8 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
     }
     const url = `${API_BASE_URL.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`;
 
-    console.log("Fetching API:", url);
     const response = await fetch(
-        `${API_BASE_URL.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`,
+        url,
         {
             next: {
                 revalidate: 60,

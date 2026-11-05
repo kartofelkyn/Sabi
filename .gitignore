@@ -3,14 +3,17 @@
 .env.*
 !.env.example
 
-# .Net
-**/bin/
-**/obj/
-
 # Next.js
 **/.next/
 **/node_modules/
 
-# IDE
+# .NET Build Outputs
+**/bin/
+**/obj/
+
+# IDE Files
 .vs/
+.vscode/
+*.user
+*.suo
 /backend/Sabi.Api/obj

@@ -4,7 +4,7 @@ export default function PageContainer({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-w-0 flex-1 bg-background p-6">
+    <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-background p-6">
       {children}
     </main>
   );
