@@ -51,11 +51,16 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> CreateAccount(
         CreateAccountDto request)
     {
+        if (!Enum.IsDefined(typeof(AccountType), request.Type))
+        {
+            return BadRequest("Invalid Account type.");
+        }
         var account = new Account
         {
             Name = request.Name.Trim(),
             InitialBalance = request.InitialBalance,
             Currency = request.Currency,
+            Type = request.Type,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -81,6 +86,11 @@ public class AccountsController : ControllerBase
     int id,
     UpdateAccountDto request)
     {
+        if (!Enum.IsDefined(typeof(AccountType), request.Type))
+        {
+            return BadRequest("Invalid Account type.");
+        }
+
         var account = await _context.Accounts
             .FindAsync(id);
 
@@ -97,6 +107,7 @@ public class AccountsController : ControllerBase
         account.Name = request.Name.Trim();
         account.InitialBalance = request.InitialBalance;
         account.Currency = request.Currency;
+        account.Type = request.Type;
 
         if (string.IsNullOrWhiteSpace(account.Name))
         {
@@ -137,7 +148,7 @@ public class AccountsController : ControllerBase
         var account = await _context.Accounts
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id);
-        
+
         if (account == null)
         {
             return NotFound("Account does not exist");
@@ -150,7 +161,7 @@ public class AccountsController : ControllerBase
                 !t.IsDeleted
             )
             .SumAsync(t => t.Amount);
-        
+
         decimal totalExpenses = await _context.Transactions
             .Where(t =>
                 t.AccountId == id &&

@@ -17,3 +17,6 @@
 *.user
 *.suo
 /backend/Sabi.Api/obj
+/backend/Sabi.Api/bin
+/backend/Sabi.Api/obj
+/backend/Sabi.Api/obj
