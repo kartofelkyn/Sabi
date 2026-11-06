@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Sabi.Api.Enums;
 
 namespace Sabi.Api.DTOs;
 
@@ -14,4 +15,7 @@ public class UpdateAccountDto
     [Required]
     [RegularExpression("^[A-Z]{3}$")]
     public string Currency { get; set; } = "PHP";
+
+    [Required]
+    public AccountType Type { get; set; }
 }
