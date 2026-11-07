@@ -19,10 +19,12 @@ export default function SideBar({ navItems }: SidebarProps) {
             className={`sidebar hidden min-h-0 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex 
                 ${isCollapsed ? "w-20" : "w-56"
                 }`}
-            onClick={() => setIsCollapsed(!isCollapsed)}
         >
-            <div className={`main-menu flex shrink-0 flex-row pt-4 pb-3 px-3 items-center
-                ${isCollapsed ? "justify-center" : "justify-start"}`}>
+            <div
+                className={`main-menu flex shrink-0 flex-row pt-4 pb-3 px-3 items-center
+                ${isCollapsed ? "justify-center" : "justify-start"}`}
+                onClick={() => setIsCollapsed(!isCollapsed)}
+            >
                 <Menu />
                 <span className={`ml-3 text-lg font-semibold ${isCollapsed ? "hidden" : "block"}`}>Main Menu</span>
             </div>

@@ -184,4 +184,53 @@ public class AccountsController : ControllerBase
         return Ok(response);
     }
 
+    // Get: /api/accounts/GetAccountsSummary
+    [HttpGet("accounts-summary")]
+    public async Task<IActionResult> GetAccountsSummary()
+    {
+        var accounts = await _context.Accounts
+            .Include(a => a.Transactions)
+            .ToListAsync();
+
+        var summaries = accounts.Select(account => MapToSummary(account)).ToList();
+
+        var allAccounts = new AccountSummaryDto
+        {
+            AccountId = 0,
+            AccountName = "All Accounts",
+            TotalIncome = summaries.Sum(a => a.TotalIncome),
+            TotalExpense = summaries.Sum(a => a.TotalExpense),
+            Balance = summaries.Sum(a => a.Balance)
+        };
+
+        summaries.Insert(0, allAccounts);
+
+        return Ok(summaries);
+    }
+
+    private AccountSummaryDto MapToSummary(Account account)
+    {
+        var initialBalance = account.InitialBalance;
+
+        var income = account.Transactions
+            .Where(t => t.Type == TransactionType.Income)
+            .Sum(t => t.Amount);
+
+        var expense = account.Transactions
+            .Where(t => t.Type == TransactionType.Expense)
+            .Sum(t => t.Amount);
+
+        var balance = initialBalance + income - expense;
+
+        var response = new AccountSummaryDto
+        {
+            AccountId = account.Id,
+            AccountName = account.Name,
+            TotalIncome = income,
+            TotalExpense = expense,
+            Balance = balance
+        };
+
+        return response;
+    }
 }

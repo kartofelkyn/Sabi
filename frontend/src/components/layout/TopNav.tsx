@@ -21,7 +21,7 @@ export default function TopNav({
   );
 
   return (
-    <header className="grid grid-cols-[20%_65%_15%] h-16 items-center justify-between border-b border-border bg-topbar px-6">
+    <header className="grid grid-cols-[22%_63%_15%] h-16 items-center justify-between border-b border-border bg-topbar px-6">
       <div>
         <h1 className="text-xl font-semibold">
           {currentItem?.label ?? "Sabi"}
