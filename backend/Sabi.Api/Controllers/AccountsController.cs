@@ -233,4 +233,37 @@ public class AccountsController : ControllerBase
 
         return response;
     }
+
+    // Get: /api/{id}/transactions
+    [HttpGet("account-transactions")]
+    public async Task<IActionResult> GetAccountTransactions
+    (
+        [FromQuery] int? accountId
+    )
+    {
+        var query = _context.Transactions
+            .Where(t => !t.IsDeleted)
+            .AsNoTracking();
+
+        if (accountId.HasValue)
+        {
+            query = query.Where(t => t.AccountId == accountId.Value);
+        }
+
+        var transactions = await query
+            .OrderByDescending(t => t.TransactionDate)
+            .Select(t => new AccountTransactionResponseDto
+            {
+                Id = t.Id,
+                AccountId = t.AccountId,
+                CategoryName = t.Category.Name,
+                Type = t.Type.ToString(),
+                Description = t.Description,
+                Amount = t.Amount,
+                TransactionDate = t.TransactionDate
+            })
+            .ToListAsync();
+
+        return Ok(transactions);
+    }
 }
