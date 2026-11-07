@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from "react";
 
+import AddAccountModal from "@/components/accounts/AddAccountModal";
+import { CreateAccount } from "@/services/account.service";
+import type { CreateAccountDto } from "@/types/accounts/CreateAccountDto";
+
 import type { AccountSummary } from "@/types/accounts/AccountsSummary";
 import type { AccountTransaction } from "@/types/accounts/AccountTransaction";
 
 import { GetAccountSummary } from "@/services/account.service";
 import { GetAccountTransaction } from "@/services/account.service";
 
-import { SquarePen } from "lucide-react";
+import { SquarePen, CreditCardPlus } from "lucide-react";
 
 export default function AccountsPage() {
   const [accountList, setAccountList] = useState<AccountSummary[]>([]);
@@ -21,6 +25,8 @@ export default function AccountsPage() {
   const [transactionList, setTransactionList] = useState<AccountTransaction[]>([]);
   const [isTransactionLoading, setIsTransactionLoading] = useState(false);
   const [transactionError, setTransactionError] = useState<string | null>(null);
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -76,10 +82,6 @@ export default function AccountsPage() {
     }
   }, [])
 
-  useEffect(() => {
-    console.log("Account List:", accountList);
-  }, [accountList]);
-
   // Get transactions for the selected account
   useEffect(() => {
     if (selectedAccountId === null) return;
@@ -120,18 +122,40 @@ export default function AccountsPage() {
     };
   }, [selectedAccountId]);
 
+  async function handleCreateAccount(data: CreateAccountDto) {
+    const createdAccount = await CreateAccount(data);
+
+    const updatedAccounts = await GetAccountSummary();
+    setAccountList(updatedAccounts);
+
+    setSelectedAccountId(createdAccount.id);
+    setSelectedAccountName(createdAccount.name);
+  }
+
   return (
     <div className="main-dashboard-page flex flex-row h-full">
-      <section className="Accounts-list h-full w-72 flex flex-col overflow-y-auto border border-border">
-        <header className="h-20 shrink-0 flex flex-col justify-center bg-card border-b border-border px-3 rounded-tl-md">
-          <h2 className="text-lg text-foreground font-bold">
-            Accounts
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            List of all active accounts
-          </p>
+      <section className="Accounts-list h-full w-72 flex flex-col overflow-y-hidden border border-border">
+        <header className="h-20 shrink-0 flex flex-row items-center justify-between bg-card border-b border-border px-3 rounded-tl-md">
+          <div>
+            <h2 className="text-lg text-foreground font-bold">
+              Accounts
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              List of all active accounts
+            </p>
+          </div>
+          <div>
+            <button
+              title="Add Account"
+              className="flex items-center justify-center gap-2 rounded-md bg-primary px-2 py-2 text-primary-foreground hover:bg-primary/90 transition-colors"
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              <CreditCardPlus size={20} />
+            </button>
+          </div>
+
         </header>
-        <div className="bg-card/70 flex-1 rounded-bl-md ">
+        <div className="bg-card/70 flex-1 rounded-bl-md overflow-y-auto">
           {isAccountLoading && !accountError && (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">
               Accounts Loading...
@@ -329,6 +353,11 @@ export default function AccountsPage() {
           </div>
         </div>
       </section>
+      <AddAccountModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleCreateAccount}
+      />
     </div>
   )
 }
