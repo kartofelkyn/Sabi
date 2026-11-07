@@ -182,7 +182,7 @@
   --color-account-card-selected: var(--account-card-selected);
   --color-account-card-selected-border: var(--account-card-selected-border);
 
-    /* Transaction Cards */
+  /* Transaction Cards */
   --color-transaction-card-1: var(--transaction-card-1);
   --color-transaction-card-1-foreground: var(--transaction-card-1-foreground);
   --color-transaction-card-1-border: var(--transaction-card-1-border);
@@ -202,6 +202,10 @@
 
   /* Borders */
   --color-border: var(--border);
+
+  /* Income / Expense */
+  --color-income: var(--chart-income);
+  --color-expense: var(--chart-expenses);
 }
 
 /* Light theme */
