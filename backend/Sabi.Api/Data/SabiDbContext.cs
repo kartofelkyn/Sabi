@@ -14,6 +14,7 @@ namespace Sabi.Api.Data
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Transaction> Transactions => Set<Transaction>();
         public DbSet<NavItem> NavItems => Set<NavItem>();
+        public DbSet<CashDenomination> CashDenominations => Set<CashDenomination>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Account>(entity =>
@@ -43,18 +44,18 @@ namespace Sabi.Api.Data
 
             modelBuilder.Entity<Transaction>(entity =>
             {
-               entity.Property(t => t.Amount)
+                entity.Property(t => t.Amount)
                     .HasPrecision(18, 2);
 
-               entity.Property(t => t.Description)
+                entity.Property(t => t.Description)
                     .HasMaxLength(500);
 
-               entity.HasOne(t => t.Account)
+                entity.HasOne(t => t.Account)
                     .WithMany(a => a.Transactions)
                     .HasForeignKey(t => t.AccountId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-               entity.HasOne(t => t.Category)
+                entity.HasOne(t => t.Category)
                     .WithMany(c => c.Transactions)
                     .HasForeignKey(t => t.CategoryId)
                     .OnDelete(DeleteBehavior.Restrict);
@@ -65,6 +66,20 @@ namespace Sabi.Api.Data
                 .WithMany(n => n.Children)
                 .HasForeignKey(n => n.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CashDenomination>(entity =>
+            {
+                entity.HasOne(c => c.Account)
+                    .WithMany(a => a.CashDenominations)
+                    .HasForeignKey(c => c.AccountId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasIndex(c => new
+                {
+                    c.AccountId,
+                    c.DenominationValue
+                })
+                .IsUnique();
+            });
         }
     }
 }

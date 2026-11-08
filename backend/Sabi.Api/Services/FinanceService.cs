@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Sabi.Api.Enums;
 using Sabi.Api.DTOs;
 using Sabi.Api.Models;
-using Sabi.Api.DTO;
 
 public class FinanceService
 {

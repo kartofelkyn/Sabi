@@ -1,6 +1,6 @@
 using Sabi.Api.DTOs;
 
-namespace Sabi.Api.DTO;
+namespace Sabi.Api.DTOs;
 
 public class DashboardResponseDto
 {
