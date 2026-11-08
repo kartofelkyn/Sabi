@@ -6,6 +6,11 @@ import AddAccountModal from "@/components/accounts/AddAccountModal";
 import { CreateAccount } from "@/services/account.service";
 import type { CreateAccountDto } from "@/types/accounts/CreateAccountDto";
 
+import EditAccountModal from "@/components/accounts/EditAccountModal";
+import { EditAccount } from "@/services/account.service";
+import type { EditAccountDto } from "@/types/accounts/EditAccountDto";
+import { DeleteAccount } from "@/services/account.service";
+
 import type { AccountSummary } from "@/types/accounts/AccountsSummary";
 import type { AccountTransaction } from "@/types/accounts/AccountTransaction";
 
@@ -27,6 +32,7 @@ export default function AccountsPage() {
   const [transactionError, setTransactionError] = useState<string | null>(null);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -132,6 +138,33 @@ export default function AccountsPage() {
     setSelectedAccountName(createdAccount.name);
   }
 
+  const handleEditAccount = async (data: EditAccountDto) => {
+    if (selectedAccountId == null) return;
+    if (selectedAccountId < 0) return;
+
+    const editedAccount = await EditAccount(selectedAccountId, data);
+
+    const updatedAccounts = await GetAccountSummary();
+    setAccountList(updatedAccounts);
+
+    setSelectedAccountId(editedAccount.id);
+    setSelectedAccountName(editedAccount.name);
+  }
+
+  const handleDeleteAccount = async () => {
+    if (selectedAccountId == null || selectedAccountId < 0){
+      return;
+    }
+
+    await DeleteAccount(selectedAccountId);
+
+    const updatedAccounts = await GetAccountSummary();
+    setAccountList(updatedAccounts);
+
+    setSelectedAccountId(0);
+    setSelectedAccountName("All Accounts");
+  }
+
   return (
     <div className="main-dashboard-page flex flex-row h-full">
       <section className="Accounts-list h-full w-72 flex flex-col overflow-y-hidden border border-border">
@@ -207,16 +240,21 @@ export default function AccountsPage() {
                   `}>
                     {account.accountName}
                   </p>
-                  <button
-                    type="button"
-                    aria-label={`Edit ${account.accountName}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // open edit modal here
-                    }}
-                  >
-                    <SquarePen size={15} />
-                  </button>
+                  {account.accountId !== 0 && (
+                    <button
+                      type="button"
+                      aria-label={`Edit ${account.accountName}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedAccountId(account.accountId);
+                        setSelectedAccountName(account.accountName);
+                        setIsEditModalOpen(true);
+                      }}
+                    >
+                      <SquarePen size={15} />
+                    </button>
+                  )}
+
                 </div>
                 <div className="accounts-info flex flex-col gap-0.5">
                   <div className="balance flex flex-row justify-between pr-3">
@@ -298,23 +336,25 @@ export default function AccountsPage() {
                 </tr>
               </thead>
               <tbody>
-                {transactionError && (
+                {isAccountLoading ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-10 text-center text-sm text-expense">
+                      Loading accounts...
+                    </td>
+                  </tr>
+                ) : transactionError ? (
                   <tr>
                     <td colSpan={4} className="px-4 py-10 text-center text-sm text-expense">
                       {transactionError}
                     </td>
                   </tr>
-                )}
-
-                {!transactionError && !isTransactionLoading && transactionList.length === 0 && (
+                ) : transactionList.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-4 py-10 text-center text-sm text-muted-foreground">
                       No transactions for this account yet.
                     </td>
                   </tr>
-                )}
-
-                {!transactionError &&
+                ) : (
                   transactionList.map((transaction, index) => {
                     const rowColor =
                       index % 2 === 0
@@ -347,7 +387,8 @@ export default function AccountsPage() {
                         </td>
                       </tr>
                     );
-                  })}
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -357,6 +398,13 @@ export default function AccountsPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleCreateAccount}
+      />
+      <EditAccountModal
+        accountId={selectedAccountId ?? -1}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={handleEditAccount}
+        onDelete={handleDeleteAccount}
       />
     </div>
   )
