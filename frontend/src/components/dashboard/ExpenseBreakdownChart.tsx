@@ -58,7 +58,7 @@ export default function ExpenseBreakdownChart({
     }
 
     return (
-        <div className="flex w-full flex-col gap-4">
+        <div className="flex w-full flex-row gap-4">
             <div className="relative h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -113,7 +113,7 @@ export default function ExpenseBreakdownChart({
                 </div>
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col h-64 gap-3 overflow-y-auto overflow-x-clip">
                 {chartData.map((item, index) => {
                     const percentage =
                         (item.value / totalExpenses) * 100;
@@ -121,7 +121,7 @@ export default function ExpenseBreakdownChart({
                     return (
                         <div
                             key={item.categoryId}
-                            className="flex items-center justify-between gap-3 text-sm"
+                            className="flex items-center justify-between gap-3 text-xs"
                         >
                             <div className="flex min-w-0 items-center gap-2">
                                 <span
