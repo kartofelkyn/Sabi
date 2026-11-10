@@ -3,11 +3,15 @@ import { Search } from "lucide-react"
 interface SearchBarProps {
     className?: string;
     placeholder?: string;
+    value: string;
+    onChange: (value: string) => void;
 }
 
 export default function SearchBar({
     className = "w-64 h-9 ml-4",
-    placeholder = "Search..."
+    placeholder = "Search...",
+    value,
+    onChange,
 }: SearchBarProps) {
     return (
         <div className={`relative ${className}`}>
@@ -19,6 +23,8 @@ export default function SearchBar({
             <input
                 type="text"
                 placeholder={placeholder}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
                 className="
                     w-full h-full
                     pl-9 pr-4 py-2
