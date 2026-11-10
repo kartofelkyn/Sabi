@@ -98,7 +98,9 @@ public class TransactionsController : ControllerBase
             {
                 Id = t.Id,
                 AccountId = t.AccountId,
+                AccountName = t.Account.Name,
                 CategoryId = t.CategoryId,
+                CategoryName = t.Category.Name,
                 Type = t.Type,
                 Amount = t.Amount,
                 Description = t.Description,
@@ -275,7 +277,9 @@ public class TransactionsController : ControllerBase
         {
             Id = transaction.Id,
             AccountId = transaction.AccountId,
+            AccountName = transaction.Account?.Name ?? string.Empty,
             CategoryId = transaction.CategoryId,
+            CategoryName = transaction.Category?.Name ?? string.Empty,
             Type = transaction.Type,
             Amount = transaction.Amount,
             Description = transaction.Description,
