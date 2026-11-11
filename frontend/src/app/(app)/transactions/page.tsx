@@ -7,11 +7,14 @@ import Dropdown from "@/components/common/Dropdown";
 import DateRangePicker from "@/components/common/DateRangePicker";
 import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";
 import type { DateRange } from "react-day-picker";
-import type { AccountTransaction } from "@/types/accounts/AccountTransaction";
+import type { PagedResponse, Transaction } from "@/types/transaction/transaction";
 import type {
   AccountsDropdown,
   CategoriesDropdown,
 } from "@/types/common/dropdown";
+
+import { getTransactions } from "@/services/transaction.service";
+import { getFinanceSummary } from "@/services/finance.service";
 import {
   getAccountsDropdown,
   getCategoriesDropdown
@@ -19,7 +22,9 @@ import {
 import {
   Edit,
   Trash,
-  Plus
+  Plus,
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
 import { th } from "react-day-picker/locale";
 
@@ -32,14 +37,20 @@ export default function TransactionsPage() {
   const [accountDropdownError, setAccountDropdownError] = useState<string | null>(null);
   const [categoryDropdownError, setCategoryDropdownError] = useState<string | null>(null);
 
+  const [income, setIncome] = useState(0);
+  const [expenses, setExpenses] = useState(0);
+  const [netCash, setNetCash] = useState(0);
+  const [financeSummaryLoading, setFinanceSummaryLoading] = useState(true);
+  const [financeSummaryError, setFinanceSummaryError] = useState<string | null>(null);
   // Data
-  const [transactionList, setTransactionList] = useState<AccountTransaction[]>([]);
+  const [transactionList, setTransactionList] = useState<Transaction[]>([]);
   const [isTransactionLoading, setIsTransactionLoading] = useState(false);
   const [transactionError, setTransactionError] = useState<string | null>(null);
 
   // Filter
-  const [search, setSearch] = useState(""); const [account, setAccount] = useState<number | null>(null);
-  const [category, setCategory] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
+  const [accountId, setAccountId] = useState<number | null>(null);
+  const [categoryId, setCategoryId] = useState<number | null>(null);
   const [transactionType, setTransactionType] = useState<number | null>(null);
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -47,6 +58,13 @@ export default function TransactionsPage() {
   const endDate = dateRange?.to ?? (
     dateRange?.from ? new Date() : undefined
   );
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -63,36 +81,6 @@ export default function TransactionsPage() {
       day: "numeric",
       year: "numeric",
     });
-
-  const sampleTransactions = [
-    {
-      id: 1,
-      accountName: "BDO Savings",
-      categoryName: "Salary",
-      description: "Monthly salary",
-      type: "Income",
-      transactionDate: "2026-11-05",
-      amount: 25000,
-    },
-    {
-      id: 2,
-      accountName: "GCash",
-      categoryName: "Food & Dining",
-      description: "Lunch with friends",
-      type: "Expense",
-      transactionDate: "2026-11-08",
-      amount: 450,
-    },
-    {
-      id: 3,
-      accountName: "BPI Savings",
-      categoryName: "Transportation",
-      description: "Grab ride going home",
-      type: "Expense",
-      transactionDate: "2026-11-10",
-      amount: 280,
-    },
-  ];
 
   useEffect(() => {
     let isActive = true;
@@ -164,6 +152,118 @@ export default function TransactionsPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadFinanceSummary() {
+      try {
+        setFinanceSummaryLoading(true);
+        setFinanceSummaryError(null);
+
+        const data = await getFinanceSummary();
+
+        if (isActive) {
+          setIncome(data.totalIncome);
+          setExpenses(data.totalExpenses);
+          setNetCash(data.netCashFlow);
+        }
+      } catch (error) {
+        if (isActive) {
+          setFinanceSummaryError(
+            error instanceof Error
+              ? error.message
+              : "Unable to fetch accounts."
+          )
+        }
+      } finally {
+        if (isActive) {
+          setFinanceSummaryLoading(false);
+        }
+      }
+    }
+
+    loadFinanceSummary();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  // Fetch Transaction
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadTransactions() {
+      try {
+        setIsTransactionLoading(true);
+        setTransactionError(null);
+
+        const data = await getTransactions({
+          accountId: accountId ?? undefined,
+          categoryId: categoryId ?? undefined,
+          type: transactionType ?? undefined,
+          startDate: startDate?.toISOString(),
+          endDate: endDate?.toISOString(),
+          page: currentPage,
+          pageSize
+        })
+
+        if (isActive) {
+          setTransactionList(data.data);
+          setTotalCount(data.totalCount);
+          setTotalPages(data.totalPages);
+        }
+      } catch (transactionError) {
+        if (isActive) {
+          setTransactionError(
+            transactionError instanceof Error
+              ? transactionError.message
+              : "Failed to load transactions."
+          )
+        }
+      } finally {
+        if (isActive) {
+          setIsTransactionLoading(false);
+        }
+      }
+    }
+
+    loadTransactions();
+
+    return () => {
+      isActive = false;
+    }
+  }, [
+    accountId,
+    categoryId,
+    transactionType,
+    startDate,
+    endDate,
+    currentPage,
+    pageSize
+  ])
+
+  // Reset page if filtered
+  const handleAccountChange = (value: number | null) => {
+    setAccountId(value);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (value: number | null) => {
+    setCategoryId(value);
+    setCurrentPage(1);
+  };
+
+  const handleTypeChange = (value: number | null) => {
+    setTransactionType(value);
+    setCurrentPage(1);
+  };
+
+  const handleDateChange = (range: DateRange | undefined) => {
+    setDateRange(range);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="main-dashboard-page w-full h-full flex flex-col gap-6">
       <header className="bg-card flex p-3 flex-col justify-center gap-3 min-h-22 border border-border rounded-md">
@@ -179,29 +279,53 @@ export default function TransactionsPage() {
           <div className="flex flex-row gap-3">
             <StatCard
               label="Transactions"
-              value="15"
+              value={
+                isTransactionLoading
+                  ? "Loading..."
+                  : transactionError
+                    ? "Error"
+                    : totalCount.toLocaleString()
+              }
               className="bg-card-secondary"
             />
             <StatCard
               label="Total Income"
-              value="₱ 15,000.00"
+              value={
+                financeSummaryLoading
+                  ? "Loading..."
+                  : financeSummaryError
+                    ? "Error"
+                    : formatCurrency(income).toLocaleString()
+              }
               className="bg-income/65"
             />
             <StatCard
               label="Total Expenses"
-              value="₱ 10,000.00"
+              value={
+                financeSummaryLoading
+                  ? "Loading..."
+                  : financeSummaryError
+                    ? "Error"
+                    : formatCurrency(expenses).toLocaleString()
+              }
               className="bg-expense/65"
             />
             <StatCard
               label="Net Cash"
-              value="₱ 5,000.00"
+              value={
+                financeSummaryLoading
+                  ? "Loading..."
+                  : financeSummaryError
+                    ? "Error"
+                    : formatCurrency(netCash).toLocaleString()
+              }
               className="bg-primary/65"
             />
           </div>
 
         </div>
       </header>
-      <section className="main-table bg-card/80 flex-1 border border-border rounded-md gap-2">
+      <section className="main-table bg-card/80 flex-1 min-h-0 flex flex-col border border-border rounded-md">
         <div className="w-full flex flex-row py-3 px-6 items-center min-h-20 border-b-2 border-border justify-between gap-2">
           <SearchBar
             className="w-70 h-10"
@@ -212,30 +336,31 @@ export default function TransactionsPage() {
           <Dropdown
             id="transaction-account"
             name="accountId"
-            value={account}
-            onChange={setAccount}
-            placeholder="Select Account"
+            value={accountId}
+            onChange={handleAccountChange}
+            placeholder="All Accounts"
             options={accountOptions ?? []}
+            disabled={accountDropdownLoading || !!accountDropdownError}
           />
           <Dropdown
             id="transaction-category"
             name="categoryId"
-            value={category}
-            onChange={setCategory}
-            placeholder="Select Category"
+            value={categoryId}
+            onChange={handleCategoryChange}
+            placeholder="All Categories"
             options={categoryOptions ?? []}
-          />
+            disabled={categoryDropdownLoading || !!categoryDropdownError} />
           <Dropdown
             id="transaction-type"
             name="transactionType"
             value={transactionType}
-            onChange={setTransactionType}
-            placeholder="Select Type"
+            onChange={handleTypeChange}
+            placeholder="All Types"
             options={transactionTypeOptions}
           />
           <DateRangePicker
             value={dateRange}
-            onChange={setDateRange}
+            onChange={handleDateChange}
           />
           <button className="
             bg-primary px-2 border border-border rounded-md h-10 min-w-20 flex flex-row items-center gap-2
@@ -260,7 +385,7 @@ export default function TransactionsPage() {
             </span>
           </button>
         </div>
-        <div className="w-full overflow-auto">
+        <div className="w-full flex-1 min-h-0 overflow-auto">
           <table className="w-full text-left border-collapse">
             <colgroup>
               <col className="w-[10%]" />
@@ -297,26 +422,32 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody>
-              {transactionError ? (
+              {isTransactionLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                    Loading transactions...
+                  </td>
+                </tr>
+              ) : transactionError ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-10 text-center text-sm text-expense">
                     {transactionError}
                   </td>
                 </tr>
-              ) : sampleTransactions.length === 0 ? (
+              ) : transactionList.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-10 text-center text-sm text-muted-foreground">
                     No transactions yet.
                   </td>
                 </tr>
               ) : (
-                sampleTransactions.map((transaction, index) => {
+                transactionList.map((transaction, index) => {
                   const rowColor =
                     index % 2 === 0
                       ? "bg-transaction-card-1 text-transaction-card-1-foreground"
                       : "bg-transaction-card-2 text-transaction-card-2-foreground";
 
-                  const isIncome = transaction.type === "Income";
+                  const isIncome = transaction.type === 1;
 
                   return (
                     <tr
@@ -363,6 +494,83 @@ export default function TransactionsPage() {
             </tbody>
           </table>
         </div>
+        <footer className="mt-auto shrink-0 flex flex-row items-center justify-between gap-4 px-6 py-3 border-t border-border bg-card rounded-b-md">          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>
+            Showing
+            <span className="font-semibold text-foreground mx-1">
+              {totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1}
+            </span>
+            to
+            <span className="font-semibold text-foreground mx-1">
+              {Math.min(currentPage * pageSize, totalCount)}
+            </span>
+            of
+            <span className="font-semibold text-foreground mx-1">
+              {totalCount}
+            </span>
+            results
+          </span>
+        </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                Rows per page
+              </span>
+
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+              >
+                {[5, 10, 20, 50].map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => prev - 1)}
+                className="h-8 w-8 flex items-center justify-center rounded-md border border-border text-foreground hover:bg-card-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              {Array.from({ length: totalPages }, (_, index) => index + 1)
+                .map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setCurrentPage(page)}
+                    className={`h-8 min-w-8 px-2 rounded-md text-xs font-medium transition-colors ${currentPage === page
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-card-hover hover:text-foreground"
+                      }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+              <button
+                type="button"
+                disabled={currentPage === totalPages || totalPages === 0}
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                className="h-8 w-8 flex items-center justify-center rounded-md border border-border text-foreground hover:bg-card-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                aria-label="Next page"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </footer>
       </section>
     </div>
   )
