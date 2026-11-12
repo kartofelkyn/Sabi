@@ -4,21 +4,18 @@ import { useEffect, useState } from "react";
 import StatCard from "@/components/transactions/StatCard";
 import SearchBar from "@/components/common/SearchBar";
 import Dropdown from "@/components/common/Dropdown";
+import AddTransactionModal from "@/components/transactions/AddTransactionModal";
 import DateRangePicker from "@/components/common/DateRangePicker";
 import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";
-import type { DateRange } from "react-day-picker";
-import type { PagedResponse, Transaction } from "@/types/transaction/transaction";
-import type {
-  AccountsDropdown,
-  CategoriesDropdown,
-} from "@/types/common/dropdown";
 
-import { getTransactions } from "@/services/transaction.service";
+import type { DateRange } from "react-day-picker";
+import type { Transaction } from "@/types/transaction/Transaction";
+import type { CreateTransactionDto } from "@/types/transaction/CreateTransactionDto";
+import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
+
+import { getTransactions, createTransaction } from "@/services/transaction.service";
 import { getFinanceSummary } from "@/services/finance.service";
-import {
-  getAccountsDropdown,
-  getCategoriesDropdown
-} from "@/services/common/dropdown.service";
+import { getAccountsDropdown, getCategoriesDropdown } from "@/services/common/dropdown.service";
 import {
   Edit,
   Trash,
@@ -26,8 +23,6 @@ import {
   ChevronRight,
   ChevronLeft
 } from "lucide-react";
-import { th } from "react-day-picker/locale";
-
 
 export default function TransactionsPage() {
   const [accountOptions, setAccountOptions] = useState<AccountsDropdown[] | null>(null);
@@ -65,6 +60,10 @@ export default function TransactionsPage() {
 
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+  // Modal
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -264,6 +263,27 @@ export default function TransactionsPage() {
     setCurrentPage(1);
   };
 
+  async function handleCreateTransaction(data: CreateTransactionDto) {
+    
+    console.log("data: ", data);
+
+    await createTransaction(data);
+
+    const updatedTransactions = await getTransactions({
+      accountId: accountId ?? undefined,
+      categoryId: categoryId ?? undefined,
+      type: transactionType ?? undefined,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+      page: currentPage,
+      pageSize
+    })
+
+    setTransactionList(updatedTransactions.data);
+    setTotalCount(updatedTransactions.totalCount);
+    setTotalPages(updatedTransactions.totalPages);
+  }
+
   return (
     <div className="main-dashboard-page w-full h-full flex flex-col gap-6">
       <header className="bg-card flex p-3 flex-col justify-center gap-3 min-h-22 border border-border rounded-md">
@@ -362,22 +382,26 @@ export default function TransactionsPage() {
             value={dateRange}
             onChange={handleDateChange}
           />
-          <button className="
-            bg-primary px-2 border border-border rounded-md h-10 min-w-20 flex flex-row items-center gap-2
-            text-primary-foreground text-base font-semibold
-            transition-colors duration-150
+          <button
+            title="Add Transaction"
+            className="
+              bg-primary px-2 border border-border rounded-md h-10 min-w-20 flex flex-row items-center gap-2
+              text-primary-foreground text-base font-semibold
+              transition-colors duration-150
 
-            hover:bg-primary/90
-            active:bg-primary/80
+              hover:bg-primary/90
+              active:bg-primary/80
 
-            focus-visible:outline-none
-            focus-visible:ring-2
-            focus-visible:ring-ring
-            focus-visible:ring-offset-2
-            focus-visible:ring-offset-background
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-ring
+              focus-visible:ring-offset-2
+              focus-visible:ring-offset-background
 
-            disabled:pointer-events-none
-            disabled:opacity-50"
+              disabled:pointer-events-none
+              disabled:opacity-50"
+              onClick={() => setIsAddModalOpen(true)}
+
           >
             <Plus />
             <span>
@@ -572,6 +596,14 @@ export default function TransactionsPage() {
           </div>
         </footer>
       </section>
+      <AddTransactionModal
+        accounts={accountOptions ?? []}
+        categories={categoryOptions ?? []}
+        type={transactionTypeOptions ?? []}
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleCreateTransaction}
+      />
     </div>
   )
 }

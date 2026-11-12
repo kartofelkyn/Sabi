@@ -13,15 +13,6 @@ export interface Transaction {
     createdAt: string;
 }
 
-export interface CreateTransactionDto {
-    accountId: number;
-    categoryId: number;
-    type: TransactionTypeEnum;
-    amount: number;
-    description: string;
-    transactionDate: string;
-}
-
 export interface UpdateTransactionDto {
     accountId: number;
     categoryId: number;

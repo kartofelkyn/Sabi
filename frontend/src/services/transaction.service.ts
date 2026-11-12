@@ -11,7 +11,7 @@ import {
     UpdateTransactionDto,
     TransactionFilters,
     PagedResponse
-} from "@/types/transaction/transaction";
+} from "@/types/transaction/Transaction";
 
 const ENDPOINT = "transactions";
 
