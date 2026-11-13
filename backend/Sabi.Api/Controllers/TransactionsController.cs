@@ -131,7 +131,7 @@ public class TransactionsController : ControllerBase
 
         if (transaction == null)
         {
-            return NotFound($"Transaction with ID {id} does not exist.");
+            return NotFound($"Transaction does not exist.");
         }
 
         return Ok(ToResponseDto(transaction));
@@ -149,7 +149,7 @@ public class TransactionsController : ControllerBase
 
         if (!accountExists)
         {
-            return NotFound($"Account with ID {request.AccountId} does not exist.");
+            return NotFound($"Account does not exist.");
         }
 
         // Check if the category exists
@@ -159,11 +159,11 @@ public class TransactionsController : ControllerBase
 
         if (category == null)
         {
-            return NotFound($"Category with ID {request.CategoryId} does not exist.");
+            return NotFound($"Category does not exist.");
         }
         if (category.Type != request.Type)
         {
-            return BadRequest($"Category with ID {request.CategoryId} does not match the transaction type.");
+            return BadRequest($"Category does not match the transaction type.");
         }
         if (!request.TransactionDate.HasValue)
         {
@@ -206,7 +206,7 @@ public class TransactionsController : ControllerBase
 
         if (transaction == null)
         {
-            return NotFound($"Transaction id {id} does not exist");
+            return NotFound($"Transaction does not exist");
         }
 
         bool accountExists = await _context.Accounts

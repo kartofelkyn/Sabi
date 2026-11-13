@@ -211,13 +211,13 @@ export default function EditAccountModal({
             resetForm();
             onClose();
         } catch (error) {
-            setStatus("error");
-
             setError(
                 error instanceof Error
                     ? error.message
                     : "Failed to delete account."
             );
+
+            setStatus("error");
         }
     }
 
@@ -397,8 +397,8 @@ export default function EditAccountModal({
 
                         <h2 className="text-lg font-bold">
                             {operation === "delete"
-                                ? "Delete failed"
-                                : "Update failed"}
+                                ? "Account deletion failed"
+                                : "Account update failed"}
                         </h2>
 
                         <p className="text-sm text-expense text-center">

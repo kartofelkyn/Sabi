@@ -127,7 +127,9 @@ export default function AddAccountModal({
                 error instanceof Error
                     ? error.message
                     : "Failed to create account."
-            )
+            );
+            
+            setStatus("error");
         }
     }
 
@@ -280,11 +282,11 @@ export default function AddAccountModal({
                         <ErrorIcon />
 
                         <h2 className="text-lg font-bold">
-                            Creation failed
+                            Account creation failed
                         </h2>
 
                         <p className="text-sm text-expense text-center">
-                            Failed to create account.
+                            {error || "Failed to create account."}
                         </p>
 
                         <button
