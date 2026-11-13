@@ -140,7 +140,9 @@ export default function AddTransactionModal({
                 error instanceof Error
                     ? error.message
                     : "Failed to create transaction."
-            )
+            );
+
+            setStatus("error");
         }
     }
     return (
@@ -304,11 +306,11 @@ export default function AddTransactionModal({
                         <ErrorIcon />
 
                         <h2 className="text-lg font-bold">
-                            Creation failed
+                            Transaction creation failed
                         </h2>
 
                         <p className="text-sm text-expense text-center">
-                            Failed to create transaction.
+                            {error || "Failed to create transaction."}
                         </p>
 
                         <button

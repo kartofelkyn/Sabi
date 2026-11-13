@@ -17,9 +17,7 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
     );
 
     if (!response.ok) {
-        throw new Error(
-            `API request failed: ${response.status} ${response.statusText}`
-        );
+        throw new Error(await getErrorMessage(response));
     }
 
     return response.json() as Promise<T>;
@@ -44,9 +42,7 @@ export async function apiPost<T>(
     });
 
     if (!response.ok) {
-        throw new Error(
-            `API request failed: ${response.status} ${response.statusText}`
-        );
+        throw new Error(await getErrorMessage(response));
     }
 
     return response.json() as Promise<T>;
@@ -71,9 +67,7 @@ export async function apiPut<T>(
     });
 
     if (!response.ok) {
-        throw new Error(
-            `API request failed: ${response.status} ${response.statusText}`
-        );
+        throw new Error(await getErrorMessage(response));
     }
 
     return response.json() as Promise<T>;
@@ -91,8 +85,33 @@ export async function apiDelete(endpoint: string): Promise<void> {
     });
 
     if (!response.ok) {
-        throw new Error(
-            `API request failed: ${response.status} ${response.statusText}`
+        throw new Error(await getErrorMessage(response));
+    }
+}
+
+async function getErrorMessage(response: Response): Promise<string> {
+    const raw = await response.text();
+
+    if (!raw) {
+        return `API request failed: ${response.status} ${response.statusText}`;
+    }
+
+    try {
+        const data = JSON.parse(raw);
+
+        if (data.errors) {
+            return Object.values(data.errors)
+                .flat()
+                .join("\n");
+        }
+
+        return (
+            data.message ||
+            data.detail ||
+            data.title ||
+            raw
         );
+    } catch {
+        return raw;
     }
 }

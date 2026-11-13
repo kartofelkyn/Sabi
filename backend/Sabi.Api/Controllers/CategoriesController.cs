@@ -15,19 +15,6 @@ public class CategoriesController : ControllerBase
         _context = context;
     }
 
-    // Get: /api/categories
-    /*
-    [HttpGet]
-    public async Task<IActionResult> GetCategories()
-    {
-        var categories = await _context.Categories
-            .AsNoTracking()
-            .OrderBy(c => c.Id)
-            .ToListAsync();
-
-        return Ok(categories);
-    }
-    */
     [HttpGet]
     public async Task<IActionResult> GetCategories(
         [FromQuery] TransactionType? type)

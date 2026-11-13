@@ -92,7 +92,9 @@ export default function EditTransactionModal({
                     setError instanceof Error
                         ? setError.message
                         : "Failed to load transactions."
-                )
+                );
+
+                setStatus("error");
             }
         }
 
@@ -351,11 +353,11 @@ export default function EditTransactionModal({
                         <ErrorIcon />
 
                         <h2 className="text-lg font-bold">
-                            Update failed
+                            Transaction update failed
                         </h2>
 
                         <p className="text-sm text-expense text-center">
-                            Failed to update transaction.
+                            {error || "Failed to update transaction."}
                         </p>
 
                         <button

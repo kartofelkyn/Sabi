@@ -93,13 +93,13 @@ export default function DeleteTransactionModal({
             resetForm();
             onClose();
         } catch (error) {
-            setStatus("error");
-
             setError(
                 error instanceof Error
                     ? error.message
                     : "Failed to delete account."
             );
+
+            setStatus("error");
         }
     }
 
@@ -250,11 +250,11 @@ export default function DeleteTransactionModal({
                         <ErrorIcon />
 
                         <h2 className="text-lg font-bold">
-                            Delete failed
+                            Transaction deletion failed
                         </h2>
 
                         <p className="text-sm text-expense text-center">
-                            Failed to delete transaction.
+                            {error || "Failed to delete transaction."}
                         </p>
 
                         <button
