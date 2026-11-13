@@ -12,5 +12,7 @@ namespace Sabi.Api.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public ICollection<Transaction> Transactions { get; set; }
             = new List<Transaction>();
+        public ICollection<CashDenomination> CashDenominations { get; set; }
+            = new List<CashDenomination>();
     }
 }

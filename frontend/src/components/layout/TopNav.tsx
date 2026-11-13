@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 import type { NavItem } from "@/types/navigation/NavItem";
@@ -16,6 +17,8 @@ export default function TopNav({
 }) {
   const pathname = usePathname();
 
+  const [search, setSearch] = useState("");
+
   const currentItem = navItems.find(
     (item) => item.path === pathname
   );
@@ -31,7 +34,11 @@ export default function TopNav({
         </p>
       </div>
       <div className="flex flex-row gap-4 px-6 justify-between border-l border-border">
-        <SearchBar className="w-100 h-9" />
+        <SearchBar
+          className="w-100 h-9"
+          value={search}
+          onChange={setSearch}
+        />
         <div className="flex flex-row gap-2">
           <ExportButton />
           <NotificationButton />
