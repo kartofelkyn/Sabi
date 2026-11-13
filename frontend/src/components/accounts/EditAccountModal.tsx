@@ -66,7 +66,11 @@ export default function EditAccountModal({
 
                 setAccount(response);
             } catch (error) {
-                setError("Failed to load account details.");
+                setError(
+                    setError instanceof Error
+                        ? setError.message
+                        : "Failed to load account details."
+                )
             }
         }
 

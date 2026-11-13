@@ -1,17 +1,8 @@
-import {
-    apiGet,
-    apiPost,
-    apiPut,
-    apiDelete
-} from "@/lib/api";
+import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 
-import {
-    Transaction,
-    CreateTransactionDto,
-    UpdateTransactionDto,
-    TransactionFilters,
-    PagedResponse
-} from "@/types/transaction/Transaction";
+import { Transaction, TransactionFilters, PagedResponse } from "@/types/transaction/Transaction";
+import { EditTransactionDto } from "@/types/transaction/EditTransactionDto";
+import { CreateTransactionDto } from "@/types/transaction/CreateTransactionDto";
 
 const ENDPOINT = "transactions";
 
@@ -62,7 +53,7 @@ export async function createTransaction(
 
 export async function updateTransaction(
     id: number,
-    data: UpdateTransactionDto
+    data: EditTransactionDto
 ): Promise<Transaction> {
     return apiPut<Transaction>(`${ENDPOINT}/${id}`, data);
 }

@@ -5,6 +5,8 @@ import StatCard from "@/components/transactions/StatCard";
 import SearchBar from "@/components/common/SearchBar";
 import Dropdown from "@/components/common/Dropdown";
 import AddTransactionModal from "@/components/transactions/AddTransactionModal";
+import EditTransactionModal from "@/components/transactions/EditTransactionModal";
+import DeleteTransactionModal from "@/components/transactions/DeleteTransactionModal";
 import DateRangePicker from "@/components/common/DateRangePicker";
 import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";
 
@@ -12,8 +14,9 @@ import type { DateRange } from "react-day-picker";
 import type { Transaction } from "@/types/transaction/Transaction";
 import type { CreateTransactionDto } from "@/types/transaction/CreateTransactionDto";
 import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
+import type { SelectedTransactionDto } from "@/types/transaction/SelectedTransactionDto";
 
-import { getTransactions, createTransaction } from "@/services/transaction.service";
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from "@/services/transaction.service";
 import { getFinanceSummary } from "@/services/finance.service";
 import { getAccountsDropdown, getCategoriesDropdown } from "@/services/common/dropdown.service";
 import {
@@ -23,6 +26,7 @@ import {
   ChevronRight,
   ChevronLeft
 } from "lucide-react";
+import { EditTransactionDto } from "@/types/transaction/EditTransactionDto";
 
 export default function TransactionsPage() {
   const [accountOptions, setAccountOptions] = useState<AccountsDropdown[] | null>(null);
@@ -37,10 +41,12 @@ export default function TransactionsPage() {
   const [netCash, setNetCash] = useState(0);
   const [financeSummaryLoading, setFinanceSummaryLoading] = useState(true);
   const [financeSummaryError, setFinanceSummaryError] = useState<string | null>(null);
+
   // Data
   const [transactionList, setTransactionList] = useState<Transaction[]>([]);
   const [isTransactionLoading, setIsTransactionLoading] = useState(false);
   const [transactionError, setTransactionError] = useState<string | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<SelectedTransactionDto | null>(null);
 
   // Filter
   const [search, setSearch] = useState("");
@@ -64,6 +70,7 @@ export default function TransactionsPage() {
   // Modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -188,7 +195,7 @@ export default function TransactionsPage() {
     };
   }, []);
 
-  // Fetch Transaction
+  // Fetch Transactions
   useEffect(() => {
     let isActive = true;
 
@@ -264,10 +271,54 @@ export default function TransactionsPage() {
   };
 
   async function handleCreateTransaction(data: CreateTransactionDto) {
-    
+
     console.log("data: ", data);
 
     await createTransaction(data);
+
+    const updatedTransactions = await getTransactions({
+      accountId: accountId ?? undefined,
+      categoryId: categoryId ?? undefined,
+      type: transactionType ?? undefined,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+      page: currentPage,
+      pageSize
+    })
+
+    setTransactionList(updatedTransactions.data);
+    setTotalCount(updatedTransactions.totalCount);
+    setTotalPages(updatedTransactions.totalPages);
+  }
+
+  async function editTransaction(data: EditTransactionDto) {
+    if (selectedTransaction === null) return;
+    if (selectedTransaction.id === null || selectedTransaction.id < 0) return;
+
+    console.log("data: ", data);
+
+    await updateTransaction(selectedTransaction.id, data);
+
+    const updatedTransactions = await getTransactions({
+      accountId: accountId ?? undefined,
+      categoryId: categoryId ?? undefined,
+      type: transactionType ?? undefined,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+      page: currentPage,
+      pageSize
+    })
+
+    setTransactionList(updatedTransactions.data);
+    setTotalCount(updatedTransactions.totalCount);
+    setTotalPages(updatedTransactions.totalPages);
+  }
+
+  async function removeTransaction() {
+    if (selectedTransaction === null ) return;
+    if (selectedTransaction.id === null || selectedTransaction.id < 0) return;
+
+    await deleteTransaction(selectedTransaction.id);
 
     const updatedTransactions = await getTransactions({
       accountId: accountId ?? undefined,
@@ -400,7 +451,7 @@ export default function TransactionsPage() {
 
               disabled:pointer-events-none
               disabled:opacity-50"
-              onClick={() => setIsAddModalOpen(true)}
+            onClick={() => setIsAddModalOpen(true)}
 
           >
             <Plus />
@@ -416,8 +467,7 @@ export default function TransactionsPage() {
               <col className="w-[15%]" />
               <col className="w-[15%]" />
               <col className="w-[20%]" />
-              <col className="w-[10%]" />
-              <col className="w-[15%]" />
+              <col className="w-[25%]" />
               <col className="w-[15%]" />
             </colgroup>
 
@@ -428,7 +478,6 @@ export default function TransactionsPage() {
                   "Account",
                   "Category",
                   "Description",
-                  "Type",
                   "Transaction Date",
                 ].map((h) => (
                   <th
@@ -479,11 +528,39 @@ export default function TransactionsPage() {
                       className={`${rowColor} hover:bg-transaction-card-hover border-b border-border last:border-b-0 transition-colors`}
                     >
                       <td className="text-muted-foreground px-4 py-3 flex flex-row gap-3 items-center text-sm truncate">
-                        <button className="hover:text-primary/60">
+                        <button
+                          className="hover:text-primary/60"
+                          onClick={() => {
+                            setSelectedTransaction({
+                              id: transaction.id,
+                              accountName: transaction.accountName,
+                              categoryName: transaction.categoryName,
+                              transactionType: transaction.type === 1 ? "Income" : "Expense",
+                              amount: transaction.amount,
+                              description: transaction.description ?? "",
+                              transactionDate: transaction.transactionDate,
+                            });
+                            setIsEditModalOpen(true);
+                          }}
+                        >
                           <Edit size={17} />
 
                         </button>
-                        <button className="hover:text-primary/60">
+                        <button
+                          className="hover:text-primary/60"
+                          onClick={() => {
+                            setSelectedTransaction({
+                              id: transaction.id,
+                              accountName: transaction.accountName,
+                              categoryName: transaction.categoryName,
+                              transactionType: transaction.type === 1 ? "Income" : "Expense",
+                              amount: transaction.amount,
+                              description: transaction.description ?? "",
+                              transactionDate: transaction.transactionDate,
+                            });
+                            setIsDeleteModalOpen(true);
+                          }}
+                        >
                           <Trash size={17} />
                         </button>
                       </td>
@@ -495,11 +572,6 @@ export default function TransactionsPage() {
                       </td>
                       <td className="px-4 py-3 text-sm truncate">
                         {transaction.description || "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={`font-medium ${isIncome ? "text-income" : "text-expense"}`}>
-                          {transaction.type}
-                        </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
                         {formatDate(transaction.transactionDate)}
@@ -603,6 +675,21 @@ export default function TransactionsPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleCreateTransaction}
+      />
+      <EditTransactionModal
+        transactionId={selectedTransaction?.id ?? null}
+        accounts={accountOptions ?? []}
+        categories={categoryOptions ?? []}
+        type={transactionTypeOptions ?? []}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={editTransaction}
+      />
+      <DeleteTransactionModal
+        selectedTransaction={selectedTransaction}
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onDelete={removeTransaction}
       />
     </div>
   )
