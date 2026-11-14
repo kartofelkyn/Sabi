@@ -39,7 +39,8 @@ namespace Sabi.Api.Data
                     .IsRequired();
 
                 entity.HasIndex(c => new { c.Name, c.Type })
-                    .IsUnique();
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
             });
 
             modelBuilder.Entity<Transaction>(entity =>
