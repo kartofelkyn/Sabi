@@ -172,6 +172,8 @@ export default function EditTransactionModal({
             resetForm();
             handleClose();
         } catch (error) {
+            setStatus("error");
+
             setError(
                 error instanceof Error
                     ? error.message
