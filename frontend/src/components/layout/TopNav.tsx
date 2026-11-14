@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 import type { NavItem } from "@/types/navigation/NavItem";
@@ -16,12 +17,14 @@ export default function TopNav({
 }) {
   const pathname = usePathname();
 
+  const [search, setSearch] = useState("");
+
   const currentItem = navItems.find(
     (item) => item.path === pathname
   );
 
   return (
-    <header className="grid grid-cols-[20%_65%_15%] h-16 items-center justify-between border-b border-border bg-topbar px-6">
+    <header className="grid grid-cols-[22%_63%_15%] h-16 items-center justify-between border-b border-border bg-topbar px-6">
       <div>
         <h1 className="text-xl font-semibold">
           {currentItem?.label ?? "Sabi"}
@@ -31,7 +34,11 @@ export default function TopNav({
         </p>
       </div>
       <div className="flex flex-row gap-4 px-6 justify-between border-l border-border">
-        <SearchBar className="w-100 h-9" />
+        <SearchBar
+          className="w-100 h-9"
+          value={search}
+          onChange={setSearch}
+        />
         <div className="flex flex-row gap-2">
           <ExportButton />
           <NotificationButton />

@@ -1,0 +1,21 @@
+using System.ComponentModel.DataAnnotations;
+
+using Sabi.Api.Enums;
+namespace Sabi.Api.DTOs;
+
+public class CreateAccountDto
+{
+    [Required]
+    [StringLength(100, MinimumLength = 1)]
+    public string Name { get; set; } = string.Empty;
+
+    [Range(typeof(decimal), "0", "79228162514264337593543950335")]
+    public decimal InitialBalance { get; set; }
+
+    [Required]
+    [RegularExpression("^[A-Z]{3}$")]
+    public string Currency { get; set; } = "PHP";
+    
+    [Required]
+    public AccountType Type { get; set; }
+}

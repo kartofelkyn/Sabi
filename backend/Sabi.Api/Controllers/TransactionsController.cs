@@ -98,7 +98,9 @@ public class TransactionsController : ControllerBase
             {
                 Id = t.Id,
                 AccountId = t.AccountId,
+                AccountName = t.Account.Name,
                 CategoryId = t.CategoryId,
+                CategoryName = t.Category.Name,
                 Type = t.Type,
                 Amount = t.Amount,
                 Description = t.Description,
@@ -129,7 +131,7 @@ public class TransactionsController : ControllerBase
 
         if (transaction == null)
         {
-            return NotFound($"Transaction with ID {id} does not exist.");
+            return NotFound($"Transaction does not exist.");
         }
 
         return Ok(ToResponseDto(transaction));
@@ -147,21 +149,21 @@ public class TransactionsController : ControllerBase
 
         if (!accountExists)
         {
-            return NotFound($"Account with ID {request.AccountId} does not exist.");
+            return NotFound($"Account does not exist.");
         }
 
         // Check if the category exists
         var category = await _context.Categories
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == request.CategoryId);
+            .FirstOrDefaultAsync(c => c.Id == request.CategoryId && !c.IsDeleted);
 
         if (category == null)
         {
-            return NotFound($"Category with ID {request.CategoryId} does not exist.");
+            return NotFound($"Category does not exist.");
         }
         if (category.Type != request.Type)
         {
-            return BadRequest($"Category with ID {request.CategoryId} does not match the transaction type.");
+            return BadRequest($"Category does not match the transaction type.");
         }
         if (!request.TransactionDate.HasValue)
         {
@@ -204,7 +206,7 @@ public class TransactionsController : ControllerBase
 
         if (transaction == null)
         {
-            return NotFound($"Transaction id {id} does not exist");
+            return NotFound($"Transaction does not exist");
         }
 
         bool accountExists = await _context.Accounts
@@ -216,7 +218,7 @@ public class TransactionsController : ControllerBase
         }
 
         var category = await _context.Categories
-            .FirstOrDefaultAsync(c => c.Id == dto.CategoryId);
+            .FirstOrDefaultAsync(c => c.Id == dto.CategoryId && !c.IsDeleted);
             
         if (category == null)
         {
@@ -275,7 +277,9 @@ public class TransactionsController : ControllerBase
         {
             Id = transaction.Id,
             AccountId = transaction.AccountId,
+            AccountName = transaction.Account?.Name ?? string.Empty,
             CategoryId = transaction.CategoryId,
+            CategoryName = transaction.Category?.Name ?? string.Empty,
             Type = transaction.Type,
             Amount = transaction.Amount,
             Description = transaction.Description,

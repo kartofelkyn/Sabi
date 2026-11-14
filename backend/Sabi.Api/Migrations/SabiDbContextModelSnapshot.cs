@@ -47,9 +47,37 @@ namespace Sabi.Api.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("Accounts");
+                });
+
+            modelBuilder.Entity("Sabi.Api.Models.CashDenomination", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DenominationValue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "DenominationValue")
+                        .IsUnique();
+
+                    b.ToTable("CashDenominations");
                 });
 
             modelBuilder.Entity("Sabi.Api.Models.Category", b =>
@@ -63,6 +91,20 @@ namespace Sabi.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -74,7 +116,8 @@ namespace Sabi.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Name", "Type")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("Categories");
                 });
@@ -168,6 +211,17 @@ namespace Sabi.Api.Migrations
                     b.ToTable("Transactions");
                 });
 
+            modelBuilder.Entity("Sabi.Api.Models.CashDenomination", b =>
+                {
+                    b.HasOne("Sabi.Api.Models.Account", "Account")
+                        .WithMany("CashDenominations")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("Sabi.Api.Models.NavItem", b =>
                 {
                     b.HasOne("Sabi.Api.Models.NavItem", "Parent")
@@ -199,6 +253,8 @@ namespace Sabi.Api.Migrations
 
             modelBuilder.Entity("Sabi.Api.Models.Account", b =>
                 {
+                    b.Navigation("CashDenominations");
+
                     b.Navigation("Transactions");
                 });
 
