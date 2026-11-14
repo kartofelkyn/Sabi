@@ -10,8 +10,10 @@ builder.Services.AddOpenApi();
 
 // Register controllers
 builder.Services.AddControllers();
+
 // Register services
 builder.Services.AddScoped<FinanceService>();
+builder.Services.AddScoped<CategoryService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

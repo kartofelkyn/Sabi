@@ -4,15 +4,21 @@ using Sabi.Api.Data;
 using Sabi.Api.DTOs;
 using Sabi.Api.Models;
 using Sabi.Api.Enums;
+using Sabi.Api.Services;
 
 [ApiController]
 [Route("api/[controller]")]
 public class CategoriesController : ControllerBase
 {
     private readonly SabiDbContext _context;
-    public CategoriesController(SabiDbContext context)
+    private readonly CategoryService _categoryService;
+    public CategoriesController(
+        SabiDbContext context,
+        CategoryService categoryService
+    )
     {
         _context = context;
+        _categoryService = categoryService;
     }
 
     [HttpGet]
@@ -41,8 +47,24 @@ public class CategoriesController : ControllerBase
         return Ok(categories);
     }
 
-    // Get: /api/categories/1
+    // Get: /api/categories/cateories-summary
+    [HttpGet("categories-summary")]
+    public async Task<IActionResult> GetCategoriesSummary(
+        [FromQuery] TransactionType? type
+    )
+    {
+        if (type.HasValue &&
+            !Enum.IsDefined(typeof(TransactionType), type.Value))
+        {
+            return BadRequest("Invalid transaction type.");
+        }
 
+        var result = await _categoryService.GetCategoriesAsync(type);
+
+        return Ok(result);
+    }
+
+    // Get: /api/categories/1
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetCategory(int id)
     {
@@ -56,6 +78,20 @@ public class CategoriesController : ControllerBase
         }
 
         return Ok(category);
+    }
+
+    // Get: /api/category-detail/{id}
+    [HttpGet("category-detail/{id:int}")]
+    public async Task<IActionResult> GetCategoryDetail(int id)
+    {
+        var result = await _categoryService.GetCategoryDetailAsync(id);
+
+        if (result == null)
+        {
+            return NotFound("Category does not exist");
+        }
+
+        return Ok(result);
     }
 
     // POST: /api/categories
@@ -128,13 +164,14 @@ public class CategoriesController : ControllerBase
             return NotFound("Category not found.");
         }
 
-        if (string.IsNullOrWhiteSpace(request.Name)){
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
             return BadRequest("Category name is required.");
         }
-        
+
         var categoryExist = await _context.Categories
-            .AnyAsync(c => 
-                c.Name.ToLower() == request.Name.Trim().ToLower() && 
+            .AnyAsync(c =>
+                c.Name.ToLower() == request.Name.Trim().ToLower() &&
                 c.Id != id &&
                 c.Type == request.Type &&
                 !c.IsDeleted
@@ -157,7 +194,7 @@ public class CategoriesController : ControllerBase
 
     // Soft Delete: /api/categories/{id}
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteCategory( int id )
+    public async Task<IActionResult> DeleteCategory(int id)
     {
         var category = await _context.Categories
             .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
