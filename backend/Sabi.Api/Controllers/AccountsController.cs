@@ -83,8 +83,9 @@ public class AccountsController : ControllerBase
     // PUT: /api/accounts/1
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateAccount(
-    int id,
-    UpdateAccountDto request)
+        int id,
+        UpdateAccountDto request
+    )
     {
         if (!Enum.IsDefined(typeof(AccountType), request.Type))
         {

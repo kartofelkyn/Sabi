@@ -155,7 +155,7 @@ public class TransactionsController : ControllerBase
         // Check if the category exists
         var category = await _context.Categories
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == request.CategoryId);
+            .FirstOrDefaultAsync(c => c.Id == request.CategoryId && !c.IsDeleted);
 
         if (category == null)
         {
@@ -218,7 +218,7 @@ public class TransactionsController : ControllerBase
         }
 
         var category = await _context.Categories
-            .FirstOrDefaultAsync(c => c.Id == dto.CategoryId);
+            .FirstOrDefaultAsync(c => c.Id == dto.CategoryId && !c.IsDeleted);
             
         if (category == null)
         {

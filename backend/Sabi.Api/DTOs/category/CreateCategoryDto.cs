@@ -9,6 +9,10 @@ public class CreateCategoryDto
     [StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = string.Empty;
 
+    public string Description { get; set; } = string.Empty;
+
+    public string Icon { get; set; } = string.Empty;
+
     [Required]
     [EnumDataType(typeof(TransactionType))]
     public TransactionType Type { get; set; }
