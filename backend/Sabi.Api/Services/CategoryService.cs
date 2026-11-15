@@ -6,29 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Sabi.Api.Enums;
 using Sabi.Api.DTOs;
 using Sabi.Api.Models;
-/*
-{
-  "totalCategories": 10,
-  "totalIncomeCategories": 4,
-  "totalExpenseCategories": 6,
-  "categories": [
-    {
-      "id": 1,
-      "name": "Food",
-      "type": "Expense",
-      "description": "Food and dining expenses",
-      "transactionCount": 25
-    },
-    {
-      "id": 2,
-      "name": "Salary",
-      "type": "Income",
-      "description": "Monthly salary",
-      "transactionCount": 12
-    }
-  ]
-}
-*/
+
 public class CategoryService
 {
     private readonly SabiDbContext _context;
