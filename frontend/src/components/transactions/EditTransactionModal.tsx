@@ -12,8 +12,7 @@ import { transactionTypeOptions } from "@/constants/transactions/transaction-typ
 import FormDropdown from "../common/FormDropdown";
 import { Spinner, CheckIcon, ErrorIcon } from "../common/FormSubmitIcon";
 import { sleep } from "@/utils/sleep";
-import { Transaction } from "@/types/transaction/Transaction";
-
+import { X } from "lucide-react";
 
 interface EditTransactionModalProps {
     transactionId: number | null;
@@ -191,28 +190,32 @@ export default function EditTransactionModal({
         >
             <div className="w-full max-w-md rounded-lg border border-border bg-card text-card-foreground">
                 {status === "idle" && (
-                    isTransactionLoading ? (
-                        <div className="flex flex-col items-center justify-center gap-3 px-6 py-12">
-                            <Spinner />
-
-                            <h2 className="text-lg font-bold">
-                                Loading Transaction...
-                            </h2>
-
-                            <p className="text-sm text-muted-foreground text-center">
-                                Please wait while we load your transaction.
-                            </p>
-                        </div>
-                    ) : (
-                        <form onSubmit={handleSubmit}>
-                            <div className="border-b border-border px-6 py-4">
-                                <h2 className="text-lg font-bold">Update Transaction</h2>
-                                <p className="text-sm text-muted-foreground">Update existing transaction.</p>
+                    <form onSubmit={handleSubmit}>
+                        <div className="flex items-start justify-between border-b border-border px-6 py-4">
+                            <div className="space-y-1">
+                                <h2 className="text-lg font-bold">
+                                    Edit Transaction
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Edit a new transaction.
+                                </p>
                             </div>
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                className="rounded-md p-1.5 text-muted-foreground hover:bg-card-hover hover:text-foreground transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
 
-                            <div className="flex flex-col gap-4 px-6 py-5">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
+                        <div className="flex flex-col gap-4 px-6 py-5">
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold">
+                                    Transaction Details
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="min-w-0 space-y-1.5">
                                         <FormDropdown
                                             id="account"
                                             name="account"
@@ -226,7 +229,7 @@ export default function EditTransactionModal({
                                             className={fieldClass}
                                         />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0 space-y-1.5">
                                         <FormDropdown
                                             id="category"
                                             name="category"
@@ -240,21 +243,28 @@ export default function EditTransactionModal({
                                             className={fieldClass}
                                         />
                                     </div>
-                                    <div>
-                                        <FormDropdown
-                                            id="transaction-type"
-                                            name="TransactionType"
-                                            label="Transaction Type"
-                                            options={type.map((item) => ({
-                                                value: item.id,
-                                                label: item.name,
-                                            }))}
-                                            value={transactionType}
-                                            onChange={setTransactionType}
-                                            className={fieldClass}
-                                        />
-                                    </div>
-                                    <div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <FormDropdown
+                                        id="transaction-type"
+                                        name="TransactionType"
+                                        label="Transaction Type"
+                                        options={type.map((item) => ({
+                                            value: item.id,
+                                            label: item.name,
+                                        }))}
+                                        value={transactionType}
+                                        onChange={setTransactionType}
+                                        className={fieldClass}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold">
+                                    Transaction Information
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="min-w-0 space-y-1.5">
                                         <label htmlFor="transaction-date" className={labelClass}>
                                             Transaction Date
                                         </label>
@@ -268,7 +278,7 @@ export default function EditTransactionModal({
                                             required
                                         />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0 space-y-1.5">
                                         <label htmlFor="amount" className={labelClass}>
                                             Amount
                                         </label>
@@ -288,39 +298,47 @@ export default function EditTransactionModal({
                                         </div>
                                     </div>
                                 </div>
-
-                                <div>
+                                <div className="space-y-1.5">
                                     <label htmlFor="amount" className={labelClass}>
                                         Description
+                                        <span className="ml-1 font-normal text-muted-foreground">
+                                            (Optional)
+                                        </span>
                                     </label>
-                                    <input
+                                    <textarea
                                         id="description"
-                                        type="text"
-                                        className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                                        className={`${fieldClass} min-h-20 resize-none`}
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Enter description."
+                                        rows={3}
                                     />
                                 </div>
-                                {error && <p className="text-sm text-expense">{error}</p>}
                             </div>
-                            <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
-                                <button
-                                    type="button"
-                                    onClick={handleClose}
-                                    className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-card-hover transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
-                                >
-                                    Update Transaction
-                                </button>
-                            </div>
-                        </form>
-                    )
+                            {error && (
+                                <div className="rounded-md border border-expense/30 bg-expense/5 px-3 py-2">
+                                    <p className="text-sm text-expense">
+                                        {error}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-card-hover transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
                 )}
                 {status === "loading" && (
                     <div className="flex flex-col items-center justify-center gap-3 px-6 py-12">

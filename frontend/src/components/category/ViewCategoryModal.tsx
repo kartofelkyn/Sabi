@@ -137,7 +137,7 @@ export default function ViewCategoryModal({
                     <div>
                         <div className="flex items-start justify-between border-b border-border px-6 py-5">
                             <div className="space-y-1">
-                                <h2 className="text-lg font-semibold">
+                                <h2 className="text-lg font-bold">
                                     Category Details
                                 </h2>
                                 <p className="text-sm text-muted-foreground">

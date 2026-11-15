@@ -77,14 +77,20 @@ export default function CategoriesPage() {
     }
   }, [])
 
+  // Filter categories
+  useEffect(() => {
+    refreshCategory();
+  }, [transactionType]);
   async function refreshCategory() {
-    const updatedCategory = await GetCategorySummary();
+    console.log({ transactionType })
+    const updatedCategory = await GetCategorySummary(transactionType ?? undefined);
 
     setCategoryList(updatedCategory.categories);
     setCategoriesTotal(updatedCategory.totalCategories);
     setIncomeCategoriesTotal(updatedCategory.totalIncomeCategories);
     setExpenseCategoriesTotal(updatedCategory.totalExpenseCategories);
   }
+
   async function handleCreateCategory(data: CreateCategoryDto) {
     await CreateCategory(data);
 
@@ -107,9 +113,9 @@ export default function CategoriesPage() {
     refreshCategory();
   }
   return (
-    <div className="main-categories-page w-full h-full min-h-0 flex flex-col gap-8 overflow-hidden">
-      <header className="min-h-22 w-full grid grid-cols-[1fr_1fr] gap-4">
-        <div className="bg-card p-3 w-full h-full flex flex-row items-center gap-4 rounded-md border-l-3 border-primary">
+    <div className="main-categories-page w-full h-full min-h-0 flex flex-col overflow-hidden">
+      <header className="bg-card min-h-22 w-full grid grid-cols-[1fr_1fr] gap-4 rounded-t-md border border-border">
+        <div className="p-3 w-full h-full flex flex-row items-center gap-4 border-l-3 border-primary">
           <div className="bg-card-secondary p-4 rounded-full text-muted-foreground">
             <FileChartColumnIncreasing size={30} />
           </div>
@@ -128,7 +134,7 @@ export default function CategoriesPage() {
           </div>
         </div>
         <div className="flex flex-row w-full h-full gap-5">
-          <div className="bg-card p-3 w-full h-full flex flex-row items-center gap-4 border-l-3 border-income rounded-md">
+          <div className="p-3 w-full h-full flex flex-row items-center gap-4 border-l-3 border-income">
             <div className="bg-card-secondary p-2.5 rounded-full text-muted-foreground">
               <BanknoteArrowUp size={40} />
             </div>
@@ -146,7 +152,7 @@ export default function CategoriesPage() {
               </div>
             </div>
           </div>
-          <div className="bg-card p-3 w-full h-full flex flex-row items-center gap-4 border-l-3 border-expenses rounded-md">
+          <div className="p-3 w-full h-full flex flex-row items-center gap-4 border-l-3 border-expenses">
             <div className="bg-card-secondary p-2.5 rounded-full text-muted-foreground">
               <BanknoteArrowDown size={40} />
             </div>
@@ -166,7 +172,7 @@ export default function CategoriesPage() {
           </div>
         </div>
       </header>
-      <section className="bg-card w-full flex-1 min-h-0 border border-border flex flex-col overflow-hidden">
+      <section className="bg-card/70 w-full flex-1 min-h-0 border border-border flex flex-col overflow-hidden rounded-b-md">
         <div className='w-full flex flex-row py-3 px-6 items-center min-h-20 border-b-2 border-border justify-between gap-2 '>
           <div className="flex flex-row gap-4">
             <SearchBar
@@ -215,117 +221,116 @@ export default function CategoriesPage() {
 
         </div>
         <div className="w-full flex-1 min-h-0 overflow-y-auto">
-          {isCategoriesLoading && (
+          {isCategoriesLoading ? (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">
               Categories Loading...
             </p>
-          )}
-          {categoriesError && (
+          ) : categoriesError ? (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">
               Unable to load categories.
             </p>
-          )}
-          {categoriesList.length === 0 && (
+          ) : categoriesList.length === 0 ? (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">
               No categories found.
             </p>
-          )}
-          {categoriesList.map((category, index) => {
-            const isIncome = category.type === 1;
+          ) : (
+            categoriesList.map((category, index) => {
+              const isIncome = category.type === 1;
 
-            return (
-              <div
-                key={category.id}
-                className={`
+              return (
+                <div
+                  key={category.id}
+                  className={`
                 group w-full min-h-22 px-5 py-3
                 flex items-center justify-between gap-4
                 border-b border-border
                 transition-colors duration-200
                 hover:bg-card-hover
                 ${index % 2 === 0
-                    ? "bg-account-card-1"
-                    : "bg-account-card-2"
-                  }
+                      ? "bg-account-card-1"
+                      : "bg-account-card-2"
+                    }
               `}
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className={`
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className={`
                     rounded-xl p-3 shrink-0
                     ${isIncome
-                      ? "bg-income/10 text-income"
-                      : "bg-expense/10 text-expense"
-                    }
+                        ? "bg-income/10 text-income"
+                        : "bg-expense/10 text-expense"
+                      }
                   `}>
-                    <DynamicIcon
-                      name={(category.icon || "file-chart-column") as React.ComponentProps<typeof DynamicIcon>["name"]}
-                      size={24}
-                    />
+                      <DynamicIcon
+                        name={(category.icon || "file-chart-column") as React.ComponentProps<typeof DynamicIcon>["name"]}
+                        size={24}
+                      />
+                    </div>
+
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-base font-semibold text-foreground truncate">
+                        {category.name ?? "Unknown"}
+                      </span>
+                      <span className="text-sm text-muted-foreground truncate">
+                        {category.description || "No description"}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-base font-semibold text-foreground truncate">
-                      {category.name ?? "Unknown"}
-                    </span>
-                    <span className="text-sm text-muted-foreground truncate">
-                      {category.description || "No description"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-6 shrink-0">
-                  <div className="flex flex-col items-end gap-1">
-                    <span className={`
+                  <div className="flex items-center gap-6 shrink-0">
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`
                       text-sm font-semibold
                       ${isIncome ? "text-income" : "text-expense"}
                     `}>
-                      {isIncome ? "Income" : "Expense"}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {category.transactionCount ?? 0} transactions
-                    </span>
-                  </div>
+                        {isIncome ? "Income" : "Expense"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {category.transactionCount ?? 0} transactions
+                      </span>
+                    </div>
 
-                  <div className="
+                    <div className="
                     flex items-center
                     border-l border-border pl-4
                   ">
-                    <button
-                      title="View category"
-                      className="p-2 rounded-md hover:bg-primary/10 text-primary/50 hover:text-foreground"
-                      onClick={() => {
-                        setIsViewModalOpen(true);
-                        setSelectedCategory(category.id);
-                      }}
-                    >
-                      <Eye size={17} />
-                    </button>
+                      <button
+                        title="View category"
+                        className="p-2 rounded-md hover:bg-primary/10 text-primary/50 hover:text-foreground"
+                        onClick={() => {
+                          setIsViewModalOpen(true);
+                          setSelectedCategory(category.id);
+                        }}
+                      >
+                        <Eye size={17} />
+                      </button>
 
-                    <button
-                      title="Edit category"
-                      className="p-2 rounded-md hover:bg-primary/10 text-primary/50 hover:text-primary"
-                      onClick={() => {
-                        setIsEditModalOpen(true);
-                        setSelectedCategory(category.id);
-                      }}
-                    >
-                      <Pencil size={17} />
-                    </button>
+                      <button
+                        title="Edit category"
+                        className="p-2 rounded-md hover:bg-primary/10 text-primary/50 hover:text-primary"
+                        onClick={() => {
+                          setIsEditModalOpen(true);
+                          setSelectedCategory(category.id);
+                        }}
+                      >
+                        <Pencil size={17} />
+                      </button>
 
-                    <button
-                      title="Delete category"
-                      className="p-2 rounded-md hover:bg-primary/10 text-primary/50 hover:text-expense"
-                      onClick={() => {
-                        setIsDeleteModalOpen(true);
-                        setSelectedCategory(category.id);
-                      }}
-                    >
-                      <Trash size={17} />
-                    </button>
+                      <button
+                        title="Delete category"
+                        className="p-2 rounded-md hover:bg-primary/10 text-primary/50 hover:text-expense"
+                        onClick={() => {
+                          setIsDeleteModalOpen(true);
+                          setSelectedCategory(category.id);
+                        }}
+                      >
+                        <Trash size={17} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </section>
       <AddCategoryModal

@@ -152,7 +152,7 @@ export default function AccountsPage() {
   }
 
   const handleDeleteAccount = async () => {
-    if (selectedAccountId == null || selectedAccountId < 0){
+    if (selectedAccountId == null || selectedAccountId < 0) {
       return;
     }
 
@@ -189,116 +189,115 @@ export default function AccountsPage() {
 
         </header>
         <div className="bg-card/70 flex-1 rounded-bl-md overflow-y-auto">
-          {isAccountLoading && !accountError && (
+          {isAccountLoading ? (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">
               Accounts Loading...
             </p>
-          )}
-          {accountError && !isAccountLoading && (
+          ) : accountError ? (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">
               Unable to load transactions.
             </p>
-          )}
-          {!accountError && !isAccountLoading && accountList.length === 0 && (
+          ) : accountList.length === 0 ? (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">
               No accounts found.
             </p>
-          )}
-          {accountList.map((account, index) => {
-            const isSelected = selectedAccountId === account.accountId;
+          ) : (
+            accountList.map((account, index) => {
+              const isSelected = selectedAccountId === account.accountId;
 
-            const cardColor = isSelected
-              ? "bg-account-card-selected border-account-card-selected-border text-account-card-1-foreground"
-              : index % 2 === 0
-                ? "bg-account-card-1 border-account-card-1-border hover:bg-card-hover text-account-card-1-foreground "
-                : "bg-account-card-2 border-account-card-2-border hover:bg-card-hover text-account-card-2-foreground ";
-            return (
-              <div
-                key={account.accountId}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.target !== e.currentTarget) return; // ignore keys from the inner button
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
+              const cardColor = isSelected
+                ? "bg-account-card-selected border-account-card-selected-border text-account-card-1-foreground"
+                : index % 2 === 0
+                  ? "bg-account-card-1 border-account-card-1-border hover:bg-card-hover text-account-card-1-foreground "
+                  : "bg-account-card-2 border-account-card-2-border hover:bg-card-hover text-account-card-2-foreground ";
+              return (
+                <div
+                  key={account.accountId}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return; // ignore keys from the inner button
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedAccountId(account.accountId);
+                    }
+                  }}
+                  onClick={() => {
                     setSelectedAccountId(account.accountId);
-                  }
-                }}
-                onClick={() => {
-                  setSelectedAccountId(account.accountId);
-                  setSelectedAccountName(account.accountName);
-                }}
-                className={`
+                    setSelectedAccountName(account.accountName);
+                  }}
+                  className={`
                   ${cardColor}
                   w-full min-h-20 px-3 text-left py-3 flex flex-col gap-1
                   border-b border-l-4 transition-colors
                 `}
-              >
-                <div className="card-header flex flex-row justify-between pr-3 ">
-                  <p className={`
+                >
+                  <div className="card-header flex flex-row justify-between pr-3 ">
+                    <p className={`
                     text-base ${isSelected ? "font-bold" : "font-semibold"}
                   `}>
-                    {account.accountName}
-                  </p>
-                  {account.accountId !== 0 && (
-                    <button
-                      type="button"
-                      aria-label={`Edit ${account.accountName}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedAccountId(account.accountId);
-                        setSelectedAccountName(account.accountName);
-                        setIsEditModalOpen(true);
-                      }}
-                    >
-                      <SquarePen size={15} />
-                    </button>
-                  )}
+                      {account.accountName}
+                    </p>
+                    {account.accountId !== 0 && (
+                      <button
+                        type="button"
+                        aria-label={`Edit ${account.accountName}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedAccountId(account.accountId);
+                          setSelectedAccountName(account.accountName);
+                          setIsEditModalOpen(true);
+                        }}
+                      >
+                        <SquarePen size={15} />
+                      </button>
+                    )}
 
-                </div>
-                <div className="accounts-info flex flex-col gap-0.5">
-                  <div className="balance flex flex-row justify-between pr-3">
-                    <p className={`
+                  </div>
+                  <div className="accounts-info flex flex-col gap-0.5">
+                    <div className="balance flex flex-row justify-between pr-3">
+                      <p className={`
                     text-sm
                     ${isSelected ? "font-normal" : "font-medium"}  
                   `}>
-                      Balance:
-                    </p>
-                    <p className={`
+                        Balance:
+                      </p>
+                      <p className={`
                     text-sm 
                     ${isSelected ? "font-medium" : "font-normal"}  
                   `}>
-                      {formatCurrency(account.balance)}
-                    </p>
-                  </div>
-                  <div className="balance flex flex-row justify-between pr-3">
-                    <p className={`
+                        {formatCurrency(account.balance)}
+                      </p>
+                    </div>
+                    <div className="balance flex flex-row justify-between pr-3">
+                      <p className={`
                     text-sm ${isSelected ? "font-normal" : "font-medium"}  
                   `}>
-                      Inflow:
-                    </p>
-                    <p className={`
+                        Inflow:
+                      </p>
+                      <p className={`
                     text-sm ${isSelected ? "font-medium" : "font-normal"}  
                   `}>
-                      {formatCurrency(account.totalIncome)}
-                    </p>
-                  </div>
-                  <div className="balance flex flex-row justify-between pr-3">
-                    <p className={`
+                        {formatCurrency(account.totalIncome)}
+                      </p>
+                    </div>
+                    <div className="balance flex flex-row justify-between pr-3">
+                      <p className={`
                     text-sm ${isSelected ? "font-normal" : "font-medium"}  
                   `}>
-                      Outflow:
-                    </p>
-                    <p className={`
+                        Outflow:
+                      </p>
+                      <p className={`
                     text-sm ${isSelected ? "font-medium" : "font-normal"}  
                   `}>
-                      {formatCurrency(account.totalExpense)}
-                    </p>
+                        {formatCurrency(account.totalExpense)}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
       </section>
       <section className="transaction-list h-full min-h-0 flex flex-col flex-1 overflow-hidden border border-l-0 border-border">

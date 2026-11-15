@@ -10,7 +10,7 @@ import { transactionTypeOptions } from "@/constants/transactions/transaction-typ
 import FormDropdown from "../common/FormDropdown";
 import { Spinner, CheckIcon, ErrorIcon } from "../common/FormSubmitIcon";
 import { sleep } from "@/utils/sleep";
-
+import { X } from "lucide-react";
 
 interface AddTransactionModalProps {
     accounts: AccountsDropdown[],
@@ -155,44 +155,60 @@ export default function AddTransactionModal({
             <div className="w-full max-w-md rounded-lg border border-border bg-card text-card-foreground">
                 {status === "idle" && (
                     <form onSubmit={handleSubmit}>
-                        <div className="border-b border-border px-6 py-4">
-                            <h2 className="text-lg font-bold">Add Transaction</h2>
-                            <p className="text-sm text-muted-foreground">Create a new transaction.</p>
+                        <div className="flex items-start justify-between border-b border-border px-6 py-4">
+                            <div className="space-y-1">
+                                <h2 className="text-lg font-bold">
+                                    Add Transaction
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Create a new transaction.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                className="rounded-md p-1.5 text-muted-foreground hover:bg-card-hover hover:text-foreground transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
                         </div>
 
                         <div className="flex flex-col gap-4 px-6 py-5">
-                            <div className="grid grid-cols-2 gap-3">
-
-
-                                <div>
-                                    <FormDropdown
-                                        id="account"
-                                        name="account"
-                                        label="Account Name"
-                                        options={accounts.map((item) => ({
-                                            value: item.id,
-                                            label: item.name,
-                                        }))}
-                                        value={accountId}
-                                        onChange={setAccountId}
-                                        className={fieldClass}
-                                    />
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold">
+                                    Transaction Details
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="min-w-0 space-y-1.5">
+                                        <FormDropdown
+                                            id="account"
+                                            name="account"
+                                            label="Account Name"
+                                            options={accounts.map((item) => ({
+                                                value: item.id,
+                                                label: item.name,
+                                            }))}
+                                            value={accountId}
+                                            onChange={setAccountId}
+                                            className={fieldClass}
+                                        />
+                                    </div>
+                                    <div className="min-w-0 space-y-1.5">
+                                        <FormDropdown
+                                            id="category"
+                                            name="category"
+                                            label="Category"
+                                            options={categories.map((item) => ({
+                                                value: item.id,
+                                                label: item.name,
+                                            }))}
+                                            value={categoryId}
+                                            onChange={setCategoryId}
+                                            className={fieldClass}
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <FormDropdown
-                                        id="category"
-                                        name="category"
-                                        label="Category"
-                                        options={categories.map((item) => ({
-                                            value: item.id,
-                                            label: item.name,
-                                        }))}
-                                        value={categoryId}
-                                        onChange={setCategoryId}
-                                        className={fieldClass}
-                                    />
-                                </div>
-                                <div>
+                                <div className="space-y-1.5">
                                     <FormDropdown
                                         id="transaction-type"
                                         name="TransactionType"
@@ -206,55 +222,70 @@ export default function AddTransactionModal({
                                         className={fieldClass}
                                     />
                                 </div>
-                                <div>
-                                    <label htmlFor="transaction-date" className={labelClass}>
-                                        Transaction Date
-                                    </label>
-                                    <input
-                                        id="transaction-date"
-                                        type="date"
-                                        className={fieldClass}
-                                        value={transactionDate}
-                                        max={new Date().toLocaleDateString("en-CA")}
-                                        onChange={(e) => setTransactionDate(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="amount" className={labelClass}>
-                                        Amount
-                                    </label>
-                                    <div className="relative">
-                                        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
-                                            ₱
-                                        </span>
+                            </div>
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold">
+                                    Transaction Information
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="min-w-0 space-y-1.5">
+                                        <label htmlFor="transaction-date" className={labelClass}>
+                                            Transaction Date
+                                        </label>
                                         <input
-                                            id="amount"
-                                            type="number"
-                                            step="100"
-                                            className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                                            value={initialAmount}
-                                            onChange={(e) => setInitialAmount(e.target.value)}
-                                            placeholder="0.00"
+                                            id="transaction-date"
+                                            type="date"
+                                            className={fieldClass}
+                                            value={transactionDate}
+                                            max={new Date().toLocaleDateString("en-CA")}
+                                            onChange={(e) => setTransactionDate(e.target.value)}
+                                            required
                                         />
                                     </div>
+                                    <div className="min-w-0 space-y-1.5">
+                                        <label htmlFor="amount" className={labelClass}>
+                                            Amount
+                                        </label>
+                                        <div className="relative">
+                                            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                                                ₱
+                                            </span>
+                                            <input
+                                                id="amount"
+                                                type="number"
+                                                step="100"
+                                                className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                                                value={initialAmount}
+                                                onChange={(e) => setInitialAmount(e.target.value)}
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label htmlFor="amount" className={labelClass}>
+                                        Description
+                                        <span className="ml-1 font-normal text-muted-foreground">
+                                            (Optional)
+                                        </span>
+                                    </label>
+                                    <textarea
+                                        id="description"
+                                        className={`${fieldClass} min-h-20 resize-none`}
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        placeholder="Enter description."
+                                        rows={3}
+                                    />
                                 </div>
                             </div>
-
-                            <div>
-                                <label htmlFor="amount" className={labelClass}>
-                                    Description
-                                </label>
-                                <input
-                                    id="description"
-                                    type="text"
-                                    className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Enter description."
-                                />
-                            </div>
-                            {error && <p className="text-sm text-expense">{error}</p>}
+                            {error && (
+                                <div className="rounded-md border border-expense/30 bg-expense/5 px-3 py-2">
+                                    <p className="text-sm text-expense">
+                                        {error}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                         <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
                             <button

@@ -336,8 +336,8 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="main-dashboard-page w-full h-full flex flex-col gap-6">
-      <header className="bg-card flex p-3 flex-col justify-center gap-3 min-h-22 border border-border rounded-md">
+    <div className="main-dashboard-page w-full h-full flex flex-col">
+      <header className="bg-card flex p-3 flex-col justify-center gap-3 min-h-22 border border-border rounded-t-md">
         <div className="header flex flex-row justify-between">
           <div className="flex flex-col">
             <h3 className="text-lg text-foreground font-bold">
@@ -396,7 +396,7 @@ export default function TransactionsPage() {
 
         </div>
       </header>
-      <section className="main-table bg-card/80 flex-1 min-h-0 flex flex-col border border-border rounded-md">
+      <section className="main-table bg-card/70 flex-1 min-h-0 flex flex-col border border-border rounded-b-md">
         <div className="w-full flex flex-row py-3 px-6 items-center min-h-20 border-b-2 border-border justify-between gap-2">
           <SearchBar
             className="w-70 h-10"
