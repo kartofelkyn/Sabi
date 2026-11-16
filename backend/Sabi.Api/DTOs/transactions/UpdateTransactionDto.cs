@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using Sabi.Api.Enums;
-using Sabi.Api.Models;
 
 namespace Sabi.Api.DTOs;
 
@@ -22,4 +21,7 @@ public class UpdateTransactionDto
     
     [Required]
     public DateTime? TransactionDate { get; set; }
+
+    public List<TransactionCashDenominationDto> CashDenomation { get; set; } = new();   
+
 }

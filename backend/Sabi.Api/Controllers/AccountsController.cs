@@ -214,11 +214,11 @@ public class AccountsController : ControllerBase
         var initialBalance = account.InitialBalance;
 
         var income = account.Transactions
-            .Where(t => t.Type == TransactionType.Income)
+            .Where(t => t.Type == TransactionType.Income && !t.IsDeleted)
             .Sum(t => t.Amount);
 
         var expense = account.Transactions
-            .Where(t => t.Type == TransactionType.Expense)
+            .Where(t => t.Type == TransactionType.Expense && !t.IsDeleted)
             .Sum(t => t.Amount);
 
         var balance = initialBalance + income - expense;

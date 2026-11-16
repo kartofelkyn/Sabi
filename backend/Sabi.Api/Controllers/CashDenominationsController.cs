@@ -26,7 +26,7 @@ public class CashDenominationController : ControllerBase
     };
 
     // Get: /api/cashdenomination/{accountId}
-    [HttpGet("accountId: int")]
+    [HttpGet("{accountId:int}")]
     public async Task<IActionResult> GetCashDenominations(int accountId)
     {
         var account = await _context.Accounts

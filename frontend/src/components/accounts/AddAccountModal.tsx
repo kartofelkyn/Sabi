@@ -38,6 +38,8 @@ export default function AddAccountModal({
 
     const selectedCurrency = currencies.find((item) => item.code === currency);
 
+    const isPhysicalCash = type === AccountType.PhysicalCash;
+
     // Status modal
     const [status, setStatus] = useState<Status>("idle");
 
@@ -83,10 +85,10 @@ export default function AddAccountModal({
             return setError("Account name is required.");
         }
 
-        const balance = Number(initialBalance);
+        const balance = isPhysicalCash ? 0 : Number(initialBalance);
 
         if (
-            initialBalance.trim() === "" ||
+            (!isPhysicalCash && initialBalance.trim() === "") ||
             !Number.isFinite(balance) ||
             balance < 0
         ) {
@@ -210,7 +212,7 @@ export default function AddAccountModal({
                                 <h3 className="text-sm font-semibold">
                                     Balance & Currency
                                 </h3>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className={`grid ${isPhysicalCash ? "grid-cols-1" : "grid-cols-2"} gap-4`}>
                                     <div className="min-w-0 space-y-1.5">
                                         <label htmlFor="account-currency" className={labelClass}>
                                             Currency
@@ -228,25 +230,27 @@ export default function AddAccountModal({
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="min-w-0 space-y-1.5">
-                                        <label htmlFor="initial-balance" className={labelClass}>
-                                            Initial balance
-                                        </label>
-                                        <div className="relative">
-                                            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
-                                                {selectedCurrency?.symbol ?? ""}
-                                            </span>
-                                            <input
-                                                id="initial-balance"
-                                                type="number"
-                                                step="0.01"
-                                                className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                                                value={initialBalance}
-                                                onChange={(e) => setInitialBalance(e.target.value)}
-                                                placeholder="0.00"
-                                            />
+                                    {!isPhysicalCash && (
+                                        <div className="min-w-0 space-y-1.5">
+                                            <label htmlFor="initial-balance" className={labelClass}>
+                                                Initial balance
+                                            </label>
+                                            <div className="relative">
+                                                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                                                    {selectedCurrency?.symbol ?? ""}
+                                                </span>
+                                                <input
+                                                    id="initial-balance"
+                                                    type="number"
+                                                    step="0.01"
+                                                    className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                                                    value={initialBalance}
+                                                    onChange={(e) => setInitialBalance(e.target.value)}
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
 

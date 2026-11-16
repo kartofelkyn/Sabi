@@ -30,6 +30,17 @@ const fieldClass =
 
 const labelClass = "mb-1 block text-sm font-medium text-foreground";
 
+const cashFieldClass =
+    "w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground " +
+    "placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
+
+const cashLabelClass = "block text-xs font-medium text-foreground";
+
+const denominations = [
+    1000, 500, 200, 100, 50,
+    20, 10, 5, 1, 0.25
+];
+
 export default function EditTransactionModal({
     transactionId,
     accounts,
@@ -45,13 +56,27 @@ export default function EditTransactionModal({
     const [categoryId, setCategoryId] = useState<number | null>(null);
     const [transactionType, setTransactionType] = useState<number | null>(null);
     const [initialAmount, setInitialAmount] = useState("");
+    const [cashQuantities, setCashQuantities] = useState<Record<string, string>>({});
     const [description, setDescription] = useState("");
     const [transactionDate, setTransactionDate] = useState("");
 
-    const [error, setError] = useState<string | null>(null);
+    const selectedAccount = accounts.find(
+        account => account.id === accountId
+    );
+
+    const isPhysicalCash = selectedAccount?.type === 2;
+
+    const cashTotal = denominations.reduce((total, denomination) => {
+        const quantity = Number(cashQuantities[String(denomination)] || 0);
+
+        return total + denomination * quantity;
+    }, 0);
+
 
     // Status modal
     const [status, setStatus] = useState<Status>("idle");
+
+    const [error, setError] = useState<string | null>(null);
     const [isTransactionLoading, setTransactionLoading] = useState(false);
 
     const isBusy = status === "loading" || status === "success";
@@ -74,39 +99,83 @@ export default function EditTransactionModal({
     useEffect(() => {
         if (!isOpen || transactionId == null || transactionId < 0) return;
 
+        let isCancelled = false;
+
         const fetchTransaction = async () => {
+            setTransactionLoading(true);
+
             try {
                 const response = await getTransaction(transactionId);
+
+                if (isCancelled) return;
 
                 if (transactionId == null) return;
 
                 setAccountId(response.accountId);
                 setCategoryId(response.categoryId);
                 setTransactionType(response.type);
+
                 setInitialAmount(response.amount.toString());
+
+                setCashQuantities(
+                    Object.fromEntries(
+                        response.cashDenomation.map(item => [
+                            String(item.denominationValue),
+                            String(item.quantity)
+                        ])
+                    )
+                );
+
                 setDescription(response.description);
                 setTransactionDate(response.transactionDate.split("T")[0]);
             } catch (error) {
+                if (isCancelled) return;
+
                 setError(
-                    setError instanceof Error
-                        ? setError.message
-                        : "Failed to load transactions."
+                    error instanceof Error
+                        ? error.message
+                        : "Failed to load transaction."
                 );
 
                 setStatus("error");
+            } finally {
+                if (!isCancelled) {
+                    setTransactionLoading(false);
+                }
             }
-        }
+        };
 
         fetchTransaction();
-    }, [isOpen])
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [isOpen, transactionId]);
 
     if (!isOpen) return null;
+
+    function handleDenominationChange(denomination: number, quantity: string) {
+        setCashQuantities(previous => ({
+            ...previous,
+            [String(denomination)]: quantity
+        }));
+    }
+
+    function handleAccountChange(newAccountId: number | null) {
+        if (newAccountId !== accountId) {
+            setCashQuantities({});
+            setInitialAmount("");
+        }
+
+        setAccountId(newAccountId);
+    }
 
     function resetForm() {
         setAccountId(null);
         setCategoryId(null);
         setTransactionType(null);
         setInitialAmount("");
+        setCashQuantities({});
         setDescription("");
         setTransactionDate("");
         setError(null);
@@ -131,18 +200,39 @@ export default function EditTransactionModal({
         if (transactionType === null) {
             return setError("Transaction Type is required.");
         }
-        if (transactionDate === null) {
+        if (!transactionDate) {
             return setError("Transaction Date is required.")
         }
 
-        const amount = Number(initialAmount);
+        const hasInvalidQuantity = denominations.some(denomination => {
+            const quantity = Number(cashQuantities[String(denomination)] || 0);
+
+            return !Number.isInteger(quantity) || quantity < 0;
+        });
+
+        if (isPhysicalCash && hasInvalidQuantity) {
+            return setError("Cash quantities must be non-negative whole numbers.");
+        }
+
+        const cashDenomation = denominations
+            .map(denomination => ({
+                denominationValue: denomination,
+                quantity: Number(cashQuantities[String(denomination)] || 0)
+            }))
+            .filter(item => item.quantity > 0);
+
+
+
+        const amount = isPhysicalCash
+            ? cashTotal
+            : Number(initialAmount);
 
         if (
-            initialAmount.trim() === "" ||
+            (!isPhysicalCash && initialAmount.trim() === "") ||
             !Number.isFinite(amount) ||
-            amount < 0
+            amount <= 0
         ) {
-            return setError("Enter a valid non-negative amount");
+            return setError("Enter a valid amount greater than zero.");
         }
 
         const transactionData: EditTransactionDto = {
@@ -150,6 +240,7 @@ export default function EditTransactionModal({
             categoryId: categoryId,
             type: transactionType,
             amount: amount,
+            cashDenomation: isPhysicalCash ? cashDenomation : [],
             description: description,
             transactionDate: transactionDate
         }
@@ -188,8 +279,17 @@ export default function EditTransactionModal({
                 if (e.target === e.currentTarget) handleClose();
             }}
         >
-            <div className="w-full max-w-md rounded-lg border border-border bg-card text-card-foreground">
-                {status === "idle" && (
+            <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-lg border border-border bg-card text-card-foreground">
+                {status === "idle" && isTransactionLoading && (
+                    <div className="flex flex-col items-center justify-center gap-3 px-6 py-12">
+                        <Spinner />
+                        <p className="text-sm text-muted-foreground">
+                            Loading transaction...
+                        </p>
+                    </div>
+                )}
+
+                {status === "idle" && !isTransactionLoading && (
                     <form onSubmit={handleSubmit}>
                         <div className="flex items-start justify-between border-b border-border px-6 py-4">
                             <div className="space-y-1">
@@ -197,7 +297,7 @@ export default function EditTransactionModal({
                                     Edit Transaction
                                 </h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Edit a new transaction.
+                                    Edit transaction.
                                 </p>
                             </div>
                             <button
@@ -209,12 +309,12 @@ export default function EditTransactionModal({
                             </button>
                         </div>
 
-                        <div className="flex flex-col gap-4 px-6 py-5">
+                        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
                             <div className="space-y-4">
                                 <h3 className="text-sm font-semibold">
                                     Transaction Details
                                 </h3>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-3 gap-4">
                                     <div className="min-w-0 space-y-1.5">
                                         <FormDropdown
                                             id="account"
@@ -225,7 +325,7 @@ export default function EditTransactionModal({
                                                 label: item.name,
                                             }))}
                                             value={accountId}
-                                            onChange={setAccountId}
+                                            onChange={handleAccountChange}
                                             className={fieldClass}
                                         />
                                     </div>
@@ -243,21 +343,22 @@ export default function EditTransactionModal({
                                             className={fieldClass}
                                         />
                                     </div>
+                                    <div className="space-y-1.5">
+                                        <FormDropdown
+                                            id="transaction-type"
+                                            name="TransactionType"
+                                            label="Transaction Type"
+                                            options={type.map((item) => ({
+                                                value: item.id,
+                                                label: item.name,
+                                            }))}
+                                            value={transactionType}
+                                            onChange={setTransactionType}
+                                            className={fieldClass}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <FormDropdown
-                                        id="transaction-type"
-                                        name="TransactionType"
-                                        label="Transaction Type"
-                                        options={type.map((item) => ({
-                                            value: item.id,
-                                            label: item.name,
-                                        }))}
-                                        value={transactionType}
-                                        onChange={setTransactionType}
-                                        className={fieldClass}
-                                    />
-                                </div>
+
                             </div>
                             <div className="space-y-4">
                                 <h3 className="text-sm font-semibold">
@@ -289,17 +390,57 @@ export default function EditTransactionModal({
                                             <input
                                                 id="amount"
                                                 type="number"
-                                                step="100"
+                                                step="0.01"
                                                 className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                                                value={initialAmount}
+                                                value={isPhysicalCash ? cashTotal.toFixed(2) : initialAmount}
+                                                disabled={isPhysicalCash}
+                                                readOnly={isPhysicalCash}
                                                 onChange={(e) => setInitialAmount(e.target.value)}
                                                 placeholder="0.00"
                                             />
                                         </div>
                                     </div>
                                 </div>
+                                {isPhysicalCash && (
+                                    <div className="space-y-3">
+                                        <h3 className="text-sm font-semibold">
+                                            Cash Denominations
+                                        </h3>
+
+                                        <div className="grid grid-cols-5 gap-y-3 gap-x-1">
+                                            {denominations.map((denomination) => (
+                                                <div
+                                                    key={denomination}
+                                                    className="flex w-full items-center gap-1"
+                                                >
+                                                    <label
+                                                        htmlFor={`denomination-${denomination}`}
+                                                        className={`${cashLabelClass} w-12 shrink-0 text-right`}
+                                                    >
+                                                        ₱{denomination.toLocaleString("en-PH", {
+                                                            minimumFractionDigits: denomination === 0.25 ? 2 : 0
+                                                        })}:
+                                                    </label>
+
+                                                    <input
+                                                        id={`denomination-${denomination}`}
+                                                        type="number"
+                                                        min="0"
+                                                        step="1"
+                                                        className={`${cashFieldClass} min-w-0 flex-1`}
+                                                        value={cashQuantities[String(denomination)] ?? ""}
+                                                        onChange={(e) =>
+                                                            handleDenominationChange(denomination, e.target.value)
+                                                        }
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="space-y-1.5">
-                                    <label htmlFor="amount" className={labelClass}>
+                                    <label htmlFor="description" className={labelClass}>
                                         Description
                                         <span className="ml-1 font-normal text-muted-foreground">
                                             (Optional)

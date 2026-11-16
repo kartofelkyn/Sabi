@@ -67,6 +67,7 @@ namespace Sabi.Api.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("DenominationValue")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Quantity")
@@ -211,6 +212,32 @@ namespace Sabi.Api.Migrations
                     b.ToTable("Transactions");
                 });
 
+            modelBuilder.Entity("Sabi.Api.Models.TransactionCashDenomination", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("DenominationValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TransactionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TransactionId", "DenominationValue")
+                        .IsUnique();
+
+                    b.ToTable("TransactionCashDenominations");
+                });
+
             modelBuilder.Entity("Sabi.Api.Models.CashDenomination", b =>
                 {
                     b.HasOne("Sabi.Api.Models.Account", "Account")
@@ -251,6 +278,17 @@ namespace Sabi.Api.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("Sabi.Api.Models.TransactionCashDenomination", b =>
+                {
+                    b.HasOne("Sabi.Api.Models.Transaction", "Transaction")
+                        .WithMany("TransactionCashDenominations")
+                        .HasForeignKey("TransactionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Transaction");
+                });
+
             modelBuilder.Entity("Sabi.Api.Models.Account", b =>
                 {
                     b.Navigation("CashDenominations");
@@ -266,6 +304,11 @@ namespace Sabi.Api.Migrations
             modelBuilder.Entity("Sabi.Api.Models.NavItem", b =>
                 {
                     b.Navigation("Children");
+                });
+
+            modelBuilder.Entity("Sabi.Api.Models.Transaction", b =>
+                {
+                    b.Navigation("TransactionCashDenominations");
                 });
 #pragma warning restore 612, 618
         }

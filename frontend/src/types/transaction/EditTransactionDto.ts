@@ -5,4 +5,8 @@ export interface EditTransactionDto {
   amount: number;
   description: string;
   transactionDate: string;
+  cashDenomation: {
+    denominationValue: number;
+    quantity: number;
+  }[];
 }
