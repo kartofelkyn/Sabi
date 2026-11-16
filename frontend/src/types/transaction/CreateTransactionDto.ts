@@ -5,4 +5,8 @@ export interface CreateTransactionDto {
   amount: number;
   description: string;
   transactionDate: string;
+  cashDenomation?: {
+    denominationValue: number;
+    quantity: number;
+  }[];
 }

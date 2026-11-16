@@ -11,6 +11,10 @@ export interface Transaction {
     description: string;
     transactionDate: string;
     createdAt: string;
+    cashDenomation: {
+        denominationValue: number;
+        quantity: number;
+    }[];
 }
 
 export interface TransactionFilters {

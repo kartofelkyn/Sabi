@@ -125,7 +125,7 @@ export default function DeleteTransactionModal({
                         <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 text-card-foreground shadow-xl">
 
                             <h2 className="text-lg font-bold">
-                                Delete Account?
+                                Delete Transaction?
                             </h2>
 
                             <p className="mt-2 text-sm text-muted-foreground">

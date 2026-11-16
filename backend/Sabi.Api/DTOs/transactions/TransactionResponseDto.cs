@@ -17,4 +17,6 @@ public class TransactionResponseDto
     public string Description { get; set; } = string.Empty;
     public DateTime TransactionDate { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    public List<TransactionCashDenominationDto> CashDenomation { get; set; } = new();
 }

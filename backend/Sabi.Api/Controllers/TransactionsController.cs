@@ -128,6 +128,7 @@ public class TransactionsController : ControllerBase
         var transaction = await _context.Transactions
             .Include(t => t.Account)
             .Include(t => t.Category)
+            .Include(t => t.TransactionCashDenominations)
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted);
 
@@ -146,7 +147,6 @@ public class TransactionsController : ControllerBase
     )
     {
         var account = await _context.Accounts
-            .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == request.AccountId);
 
         if (account == null)
@@ -157,7 +157,6 @@ public class TransactionsController : ControllerBase
         bool isPhysicalCash = account.Type == AccountType.PhysicalCash;
 
         var category = await _context.Categories
-            .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == request.CategoryId && !c.IsDeleted);
 
         if (category == null)
@@ -725,7 +724,14 @@ public class TransactionsController : ControllerBase
             Amount = transaction.Amount,
             Description = transaction.Description,
             TransactionDate = transaction.TransactionDate,
-            CreatedAt = transaction.CreatedAt
+            CreatedAt = transaction.CreatedAt,
+            CashDenomation = transaction.TransactionCashDenominations
+                .Select(item => new TransactionCashDenominationDto
+                {
+                    DenominationValue = item.DenominationValue,
+                    Quantity = item.Quantity
+                })
+                .ToList()
         };
         return response;
     }
