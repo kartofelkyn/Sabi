@@ -20,4 +20,7 @@ public class Transaction
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; } = null;
 
+    // Transaction -> cashdenomination = one to many
+    public ICollection<TransactionCashDenomination> TransactionCashDenominations { get; set; }
+        = new List<TransactionCashDenomination>();    
 }

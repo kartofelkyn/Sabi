@@ -20,4 +20,5 @@ public class CreateTransactionDto
     [Required]
     public DateTime? TransactionDate { get; set; }
 
+    public List<TransactionCashDenominationDto> CashDenomation { get; set; } = new();   
 }
