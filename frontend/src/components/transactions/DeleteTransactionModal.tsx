@@ -4,16 +4,16 @@ import { useEffect, useState } from "react";
 
 import { getTransaction } from "@/services/transaction.service";
 
-import type { DeleteTransactionDto } from "@/types/transaction/DeleteTransactionDto";
+import type { DeleteTransactionDto } from "@/types/transactions/DeleteTransactionDto";
 import type { Status } from "@/types/common/submitStatus";
-import type { SelectedTransactionDto } from "@/types/transaction/SelectedTransactionDto";
+import type { SelectedTransactionDto } from "@/types/transactions/SelectedTransactionDto";
 import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
 import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";
 
 import FormDropdown from "../common/FormDropdown";
 import { Spinner, CheckIcon, ErrorIcon } from "../common/FormSubmitIcon";
 import { sleep } from "@/utils/sleep";
-import { Transaction } from "@/types/transaction/Transaction";
+import { Transaction } from "@/types/transactions/TransactionType";
 
 
 interface DeleteTransactionModalProps {
@@ -125,7 +125,7 @@ export default function DeleteTransactionModal({
                         <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 text-card-foreground shadow-xl">
 
                             <h2 className="text-lg font-bold">
-                                Delete Account?
+                                Delete Transaction?
                             </h2>
 
                             <p className="mt-2 text-sm text-muted-foreground">

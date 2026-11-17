@@ -4,6 +4,7 @@ export interface Transaction {
     id: number;
     accountId: number;
     accountName: string;
+    isAccountDeleted: boolean;
     categoryId: number;
     categoryName: string;
     type: TransactionTypeEnum;
@@ -11,6 +12,10 @@ export interface Transaction {
     description: string;
     transactionDate: string;
     createdAt: string;
+    cashDenomation: {
+        denominationValue: number;
+        quantity: number;
+    }[];
 }
 
 export interface TransactionFilters {

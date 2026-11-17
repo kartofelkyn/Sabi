@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import type { CreateTransactionDto } from "@/types/transaction/CreateTransactionDto";
+import type { CreateTransactionDto } from "@/types/transactions/CreateTransactionDto";
 import type { Status } from "@/types/common/submitStatus";
 import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
 import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";
@@ -10,7 +10,7 @@ import { transactionTypeOptions } from "@/constants/transactions/transaction-typ
 import FormDropdown from "../common/FormDropdown";
 import { Spinner, CheckIcon, ErrorIcon } from "../common/FormSubmitIcon";
 import { sleep } from "@/utils/sleep";
-
+import { X } from "lucide-react";
 
 interface AddTransactionModalProps {
     accounts: AccountsDropdown[],
@@ -27,6 +27,17 @@ const fieldClass =
 
 const labelClass = "mb-1 block text-sm font-medium text-foreground";
 
+const cashFieldClass =
+    "w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground " +
+    "placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
+
+const cashLabelClass = "block text-xs font-medium text-foreground";
+
+const denominations = [
+    1000, 500, 200, 100, 50,
+    20, 10, 5, 1, 0.25
+];
+
 export default function AddTransactionModal({
     accounts,
     categories,
@@ -40,12 +51,25 @@ export default function AddTransactionModal({
     const [categoryId, setCategoryId] = useState<number | null>(null);
     const [transactionType, setTransactionType] = useState<number | null>(null);
     const [initialAmount, setInitialAmount] = useState("");
+    const [cashQuantities, setCashQuantities] = useState<Record<string, string>>({});
     const [description, setDescription] = useState("");
     const [transactionDate, setTransactionDate] = useState("");
 
-    const [error, setError] = useState<string | null>(null);
+    const selectedAccount = accounts.find(
+        (account) => account.id === accountId
+    );
+
+    const isPhysicalCash = selectedAccount?.type === 2;
+
+    const cashTotal = denominations.reduce((total, denomination) => {
+        const quantity = Number(cashQuantities[String(denomination)] || 0);
+
+        return total + (denomination * quantity);
+    }, 0);
 
     // Status modal
+    const [error, setError] = useState<string | null>(null);
+
     const [status, setStatus] = useState<Status>("idle");
 
     const isBusy = status === "loading" || status === "success";
@@ -65,7 +89,19 @@ export default function AddTransactionModal({
         return () => window.removeEventListener("keydown", onKeyDown);
     }, [isOpen, onClose]);
 
+    useEffect(() => {
+        setCashQuantities({});
+        setInitialAmount("");
+    }, [accountId]);
+
     if (!isOpen) return null;
+
+    function handleDenominationChange(denomination: number, quantity: string) {
+        setCashQuantities((previous) => ({
+            ...previous,
+            [String(denomination)]: quantity
+        }));
+    }
 
     function resetForm() {
         setAccountId(null);
@@ -76,6 +112,7 @@ export default function AddTransactionModal({
         setTransactionDate("");
         setError(null);
         setStatus("idle");
+        setCashQuantities({});
     }
 
     function handleClose() {
@@ -96,19 +133,38 @@ export default function AddTransactionModal({
         if (transactionType === null) {
             return setError("Transaction Type is required.");
         }
-        if (transactionDate === null) {
-            return setError("Transaction Date is required.")
+        if (!transactionDate) {
+            return setError("Transaction Date is required.");
         }
 
-        const amount = Number(initialAmount);
+        const amount = isPhysicalCash
+            ? cashTotal
+            : Number(initialAmount);
 
         if (
-            initialAmount.trim() === "" ||
             !Number.isFinite(amount) ||
-            amount < 0
+            amount <= 0
         ) {
-            return setError("Enter a valid non-negative amount");
+            return setError("Enter an amount greater than zero.");
         }
+
+        if (
+            isPhysicalCash &&
+            Object.values(cashQuantities).some(
+                (quantity) =>
+                    quantity !== "" &&
+                    (!Number.isInteger(Number(quantity)) || Number(quantity) < 0)
+            )
+        ) {
+            return setError("Denomination quantities must be non-negative whole numbers.");
+        }
+
+        const cashDenomation = denominations
+            .map((denomination) => ({
+                denominationValue: denomination,
+                quantity: Number(cashQuantities[String(denomination)] || 0)
+            }))
+            .filter((item) => item.quantity > 0);
 
         const transactionData: CreateTransactionDto = {
             accountId: accountId,
@@ -116,7 +172,8 @@ export default function AddTransactionModal({
             type: transactionType,
             amount: amount,
             description: description,
-            transactionDate: transactionDate
+            transactionDate: transactionDate,
+            cashDenomation: isPhysicalCash ? cashDenomation : []
         }
 
         try {
@@ -152,109 +209,181 @@ export default function AddTransactionModal({
                 if (e.target === e.currentTarget) handleClose();
             }}
         >
-            <div className="w-full max-w-md rounded-lg border border-border bg-card text-card-foreground">
+            <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-lg border border-border bg-card text-card-foreground">
                 {status === "idle" && (
                     <form onSubmit={handleSubmit}>
-                        <div className="border-b border-border px-6 py-4">
-                            <h2 className="text-lg font-bold">Add Transaction</h2>
-                            <p className="text-sm text-muted-foreground">Create a new transaction.</p>
+                        <div className="flex items-start justify-between border-b border-border px-6 py-4">
+                            <div className="space-y-1">
+                                <h2 className="text-lg font-bold">
+                                    Add Transaction
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Create a new transaction.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                className="rounded-md p-1.5 text-muted-foreground hover:bg-card-hover hover:text-foreground transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
                         </div>
 
-                        <div className="flex flex-col gap-4 px-6 py-5">
-                            <div className="grid grid-cols-2 gap-3">
-
-
-                                <div>
-                                    <FormDropdown
-                                        id="account"
-                                        name="account"
-                                        label="Account Name"
-                                        options={accounts.map((item) => ({
-                                            value: item.id,
-                                            label: item.name,
-                                        }))}
-                                        value={accountId}
-                                        onChange={setAccountId}
-                                        className={fieldClass}
-                                    />
-                                </div>
-                                <div>
-                                    <FormDropdown
-                                        id="category"
-                                        name="category"
-                                        label="Category"
-                                        options={categories.map((item) => ({
-                                            value: item.id,
-                                            label: item.name,
-                                        }))}
-                                        value={categoryId}
-                                        onChange={setCategoryId}
-                                        className={fieldClass}
-                                    />
-                                </div>
-                                <div>
-                                    <FormDropdown
-                                        id="transaction-type"
-                                        name="TransactionType"
-                                        label="Transaction Type"
-                                        options={type.map((item) => ({
-                                            value: item.id,
-                                            label: item.name,
-                                        }))}
-                                        value={transactionType}
-                                        onChange={setTransactionType}
-                                        className={fieldClass}
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="transaction-date" className={labelClass}>
-                                        Transaction Date
-                                    </label>
-                                    <input
-                                        id="transaction-date"
-                                        type="date"
-                                        className={fieldClass}
-                                        value={transactionDate}
-                                        max={new Date().toLocaleDateString("en-CA")}
-                                        onChange={(e) => setTransactionDate(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="amount" className={labelClass}>
-                                        Amount
-                                    </label>
-                                    <div className="relative">
-                                        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
-                                            ₱
-                                        </span>
-                                        <input
-                                            id="amount"
-                                            type="number"
-                                            step="100"
-                                            className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                                            value={initialAmount}
-                                            onChange={(e) => setInitialAmount(e.target.value)}
-                                            placeholder="0.00"
+                        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold">
+                                    Transaction Details
+                                </h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div className="min-w-0 space-y-1.5">
+                                        <FormDropdown
+                                            id="account"
+                                            name="account"
+                                            label="Account Name"
+                                            options={accounts.map((item) => ({
+                                                value: item.id,
+                                                label: item.name,
+                                            }))}
+                                            value={accountId}
+                                            onChange={setAccountId}
+                                            className={fieldClass}
+                                        />
+                                    </div>
+                                    <div className="min-w-0 space-y-1.5">
+                                        <FormDropdown
+                                            id="category"
+                                            name="category"
+                                            label="Category"
+                                            options={categories.map((item) => ({
+                                                value: item.id,
+                                                label: item.name,
+                                            }))}
+                                            value={categoryId}
+                                            onChange={setCategoryId}
+                                            className={fieldClass}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <FormDropdown
+                                            id="transaction-type"
+                                            name="TransactionType"
+                                            label="Transaction Type"
+                                            options={type.map((item) => ({
+                                                value: item.id,
+                                                label: item.name,
+                                            }))}
+                                            value={transactionType}
+                                            onChange={setTransactionType}
+                                            className={fieldClass}
                                         />
                                     </div>
                                 </div>
-                            </div>
 
-                            <div>
-                                <label htmlFor="amount" className={labelClass}>
-                                    Description
-                                </label>
-                                <input
-                                    id="description"
-                                    type="text"
-                                    className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Enter description."
-                                />
                             </div>
-                            {error && <p className="text-sm text-expense">{error}</p>}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold">
+                                    Transaction Information
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="min-w-0 space-y-1.5">
+                                        <label htmlFor="transaction-date" className={labelClass}>
+                                            Transaction Date
+                                        </label>
+                                        <input
+                                            id="transaction-date"
+                                            type="date"
+                                            className={fieldClass}
+                                            value={transactionDate}
+                                            max={new Date().toLocaleDateString("en-CA")}
+                                            onChange={(e) => setTransactionDate(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="min-w-0 space-y-1.5">
+                                        <label htmlFor="amount" className={labelClass}>
+                                            Amount
+                                        </label>
+                                        <div className="relative">
+                                            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                                                ₱
+                                            </span>
+                                            <input
+                                                id="amount"
+                                                type="number"
+                                                step="0.01"
+                                                className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                                                value={isPhysicalCash ? cashTotal.toFixed(2) : initialAmount}
+                                                disabled={isPhysicalCash}
+                                                readOnly={isPhysicalCash}
+                                                onChange={(e) => setInitialAmount(e.target.value)}
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                {isPhysicalCash && (
+                                    <div className="space-y-3">
+                                        <h3 className="text-sm font-semibold">
+                                            Cash Denominations
+                                        </h3>
+
+                                        <div className="grid grid-cols-5 gap-y-3 gap-x-1">
+                                            {denominations.map((denomination) => (
+                                                <div
+                                                    key={denomination}
+                                                    className="flex w-full items-center gap-1"
+                                                >
+                                                    <label
+                                                        htmlFor={`denomination-${denomination}`}
+                                                        className={`${cashLabelClass} w-12 shrink-0 text-right`}
+                                                    >
+                                                        ₱{denomination.toLocaleString("en-PH", {
+                                                            minimumFractionDigits: denomination === 0.25 ? 2 : 0
+                                                        })}:
+                                                    </label>
+
+                                                    <input
+                                                        id={`denomination-${denomination}`}
+                                                        type="number"
+                                                        min="0"
+                                                        step="1"
+                                                        className={`${cashFieldClass} min-w-0 flex-1`}
+                                                        value={cashQuantities[String(denomination)] ?? ""}
+                                                        onChange={(e) =>
+                                                            handleDenominationChange(denomination, e.target.value)
+                                                        }
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="space-y-1.5">
+                                    <label htmlFor="description" className={labelClass}>
+                                        Description
+                                        <span className="ml-1 font-normal text-muted-foreground">
+                                            (Optional)
+                                        </span>
+                                    </label>
+                                    <textarea
+                                        id="description"
+                                        className={`${fieldClass} min-h-20 resize-none`}
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        placeholder="Enter description."
+                                        rows={3}
+                                    />
+                                </div>
+                            </div>
+                            {error && (
+                                <div className="rounded-md border border-expense/30 bg-expense/5 px-3 py-2">
+                                    <p className="text-sm text-expense">
+                                        {error}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                         <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
                             <button

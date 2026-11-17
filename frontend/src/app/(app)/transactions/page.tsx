@@ -11,10 +11,10 @@ import DateRangePicker from "@/components/common/DateRangePicker";
 import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";
 
 import type { DateRange } from "react-day-picker";
-import type { Transaction } from "@/types/transaction/Transaction";
-import type { CreateTransactionDto } from "@/types/transaction/CreateTransactionDto";
+import type { Transaction } from "@/types/transactions/TransactionType";
+import type { CreateTransactionDto } from "@/types/transactions/CreateTransactionDto";
 import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
-import type { SelectedTransactionDto } from "@/types/transaction/SelectedTransactionDto";
+import type { SelectedTransactionDto } from "@/types/transactions/SelectedTransactionDto";
 
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from "@/services/transaction.service";
 import { getFinanceSummary } from "@/services/finance.service";
@@ -26,7 +26,7 @@ import {
   ChevronRight,
   ChevronLeft
 } from "lucide-react";
-import { EditTransactionDto } from "@/types/transaction/EditTransactionDto";
+import { EditTransactionDto } from "@/types/transactions/EditTransactionDto";
 
 export default function TransactionsPage() {
   const [accountOptions, setAccountOptions] = useState<AccountsDropdown[] | null>(null);
@@ -248,7 +248,9 @@ export default function TransactionsPage() {
     currentPage,
     pageSize
   ])
-
+  useEffect(() => {
+    console.log(transactionList)
+  }, [transactionList])
   // Reset page if filtered
   const handleAccountChange = (value: number | null) => {
     setAccountId(value);
@@ -315,7 +317,7 @@ export default function TransactionsPage() {
   }
 
   async function removeTransaction() {
-    if (selectedTransaction === null ) return;
+    if (selectedTransaction === null) return;
     if (selectedTransaction.id === null || selectedTransaction.id < 0) return;
 
     await deleteTransaction(selectedTransaction.id);
@@ -336,8 +338,8 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="main-dashboard-page w-full h-full flex flex-col gap-6">
-      <header className="bg-card flex p-3 flex-col justify-center gap-3 min-h-22 border border-border rounded-md">
+    <div className="main-dashboard-page w-full h-full flex flex-col">
+      <header className="bg-card flex p-3 flex-col justify-center gap-3 min-h-22 border border-border rounded-t-md">
         <div className="header flex flex-row justify-between">
           <div className="flex flex-col">
             <h3 className="text-lg text-foreground font-bold">
@@ -396,7 +398,7 @@ export default function TransactionsPage() {
 
         </div>
       </header>
-      <section className="main-table bg-card/80 flex-1 min-h-0 flex flex-col border border-border rounded-md">
+      <section className="main-table bg-card/70 flex-1 min-h-0 flex flex-col border border-border rounded-b-md">
         <div className="w-full flex flex-row py-3 px-6 items-center min-h-20 border-b-2 border-border justify-between gap-2">
           <SearchBar
             className="w-70 h-10"
@@ -464,10 +466,10 @@ export default function TransactionsPage() {
           <table className="w-full text-left border-collapse">
             <colgroup>
               <col className="w-[10%]" />
-              <col className="w-[15%]" />
-              <col className="w-[15%]" />
               <col className="w-[20%]" />
+              <col className="w-[15%]" />
               <col className="w-[25%]" />
+              <col className="w-[15%]" />
               <col className="w-[15%]" />
             </colgroup>
 
@@ -565,7 +567,12 @@ export default function TransactionsPage() {
                         </button>
                       </td>
                       <td className="px-4 py-3 text-sm truncate">
-                        {transaction.accountName}
+                        {transaction.accountName} {transaction.isAccountDeleted}
+                        {transaction.isAccountDeleted && (
+                          <span className="ml-1 text-xs text-muted-foreground">
+                            (deleted)
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm truncate">
                         {transaction.categoryName}

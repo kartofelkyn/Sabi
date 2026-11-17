@@ -24,6 +24,7 @@ public class AccountsController : ControllerBase
     {
         var accounts = await _context.Accounts
             .AsNoTracking()
+            .Where(a => !a.IsDeleted)
             .OrderBy(a => a.Id)
             .ToListAsync();
 
@@ -36,6 +37,7 @@ public class AccountsController : ControllerBase
     {
         var account = await _context.Accounts
             .AsNoTracking()
+            .Where(a => !a.IsDeleted)
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (account == null)
@@ -93,7 +95,7 @@ public class AccountsController : ControllerBase
         }
 
         var account = await _context.Accounts
-            .FindAsync(id);
+            .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
 
         if (account == null)
         {
@@ -125,7 +127,7 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> DeleteAccount(int id)
     {
         var account = await _context.Accounts
-            .FindAsync(id);
+            .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
 
         if (account == null)
         {
@@ -135,7 +137,8 @@ public class AccountsController : ControllerBase
             });
         }
 
-        _context.Accounts.Remove(account);
+        account.IsDeleted = true;
+        account.DeletedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
@@ -148,6 +151,7 @@ public class AccountsController : ControllerBase
     {
         var account = await _context.Accounts
             .AsNoTracking()
+            .Where(a => !a.IsDeleted)
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (account == null)
@@ -190,6 +194,7 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> GetAccountsSummary()
     {
         var accounts = await _context.Accounts
+            .Where(a => !a.IsDeleted)
             .Include(a => a.Transactions)
             .ToListAsync();
 
@@ -214,11 +219,11 @@ public class AccountsController : ControllerBase
         var initialBalance = account.InitialBalance;
 
         var income = account.Transactions
-            .Where(t => t.Type == TransactionType.Income)
+            .Where(t => t.Type == TransactionType.Income && !t.IsDeleted)
             .Sum(t => t.Amount);
 
         var expense = account.Transactions
-            .Where(t => t.Type == TransactionType.Expense)
+            .Where(t => t.Type == TransactionType.Expense && !t.IsDeleted)
             .Sum(t => t.Amount);
 
         var balance = initialBalance + income - expense;

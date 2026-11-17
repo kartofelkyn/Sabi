@@ -15,6 +15,7 @@ namespace Sabi.Api.Data
         public DbSet<Transaction> Transactions => Set<Transaction>();
         public DbSet<NavItem> NavItems => Set<NavItem>();
         public DbSet<CashDenomination> CashDenominations => Set<CashDenomination>();
+        public DbSet<TransactionCashDenomination> TransactionCashDenominations => Set<TransactionCashDenomination>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Account>(entity =>
@@ -62,6 +63,22 @@ namespace Sabi.Api.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            modelBuilder.Entity<TransactionCashDenomination>(entity =>
+            {
+                entity.HasOne(t => t.Transaction)
+                    .WithMany(t => t.TransactionCashDenominations)
+                    .HasForeignKey(t => t.TransactionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.Property(c => c.DenominationValue)
+                    .HasPrecision(18, 2);
+                entity.HasIndex(t => new
+                {
+                    t.TransactionId,
+                    t.DenominationValue
+                })
+                .IsUnique();
+            });
+
             modelBuilder.Entity<NavItem>()
                 .HasOne(n => n.Parent)
                 .WithMany(n => n.Children)
@@ -79,7 +96,9 @@ namespace Sabi.Api.Data
                     c.AccountId,
                     c.DenominationValue
                 })
-                .IsUnique();
+                    .IsUnique();
+                entity.Property(c => c.DenominationValue)
+                    .HasPrecision(18, 2);
             });
         }
     }

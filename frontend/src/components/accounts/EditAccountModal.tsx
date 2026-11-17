@@ -5,15 +5,14 @@ import { useEffect, useState } from "react";
 import { AccountType } from "@/types/accounts/AccountType";
 import { currencies } from "@/types/accounts/Currencies";
 
-import type { EditAccountDto } from "@/types/accounts/EditAccountDto";
-
 import { GetAccount } from "@/services/account.service";
 import type { AccountResponse } from "@/types/accounts/AccountResponse";
-
+import type { EditAccountDto } from "@/types/accounts/EditAccountDto";
 import type { Status } from "@/types/common/submitStatus";
 
 import { sleep } from "@/utils/sleep";
 import { Spinner, CheckIcon, ErrorIcon } from "../common/FormSubmitIcon";
+import { X } from "lucide-react";
 
 interface EditAccountModalProps {
     isOpen: boolean;
@@ -46,6 +45,8 @@ export default function EditAccountModal({
 
     const selectedCurrency = currencies.find((item) => item.code === currency);
 
+    const isPhysicalCash = type === AccountType.PhysicalCash;
+
     // Status modal
     const [status, setStatus] = useState<Status>("idle");
 
@@ -75,7 +76,7 @@ export default function EditAccountModal({
         }
 
         fetchAccount();
-    }, [isOpen])
+    }, [isOpen, accountId])
 
     useEffect(() => {
         if (!account) return;
@@ -141,10 +142,10 @@ export default function EditAccountModal({
             return setError("Account name is required.");
         }
 
-        const balance = Number(initialBalance);
+        const balance = isPhysicalCash ? 0 : Number(initialBalance);
 
         if (
-            initialBalance.trim() === "" ||
+            (!isPhysicalCash && initialBalance.trim() === "") ||
             !Number.isFinite(balance) ||
             balance < 0
         ) {
@@ -232,98 +233,125 @@ export default function EditAccountModal({
 
                 {status === "idle" && (
                     <form onSubmit={handleSubmit}>
-                        <div className="border-b border-border px-6 py-4">
-                            <h2 className="text-lg font-bold">Edit Account</h2>
-                            <p className="text-sm text-muted-foreground">
-                                Edit {accountName} account.
-                            </p>
+                        <div className="flex items-start justify-between border-b border-border px-6 py-4">
+                            <div className="space-y-1">
+                                <h2 className="text-lg font-bold">
+                                    Edit Account
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Edit {accountName} account.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                className="rounded-md p-1.5 text-muted-foreground hover:bg-card-hover hover:text-foreground transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
                         </div>
 
                         <div className="flex flex-col gap-4 px-6 py-5">
-                            <div>
-                                <label htmlFor="account-name" className={labelClass}>
-                                    Account name
-                                </label>
-                                <input
-                                    id="account-name"
-                                    type="text"
-                                    className={fieldClass}
-                                    value={accountName}
-                                    onChange={(e) => setAccountName(e.target.value)}
-                                    placeholder="e.g. BDO Savings"
-                                    autoFocus
-                                />
-                            </div>
-
-                            <div>
-                                <label htmlFor="account-type" className={labelClass}>
-                                    Account type
-                                </label>
-                                <select
-                                    id="account-type"
-                                    className={fieldClass}
-                                    value={type}
-                                    onChange={(e) =>
-                                        setType(
-                                            e.target.value === ""
-                                                ? ""
-                                                : Number(e.target.value) as AccountType
-                                        )
-                                    }
-                                >
-                                    <option value="">Select account type</option>
-                                    {Object.entries(AccountType)
-                                        .filter(([key]) => isNaN(Number(key)))
-                                        .map(([key, value]) => (
-                                            <option key={value} value={value}>
-                                                {formatEnumLabel(key)}
-                                            </option>
-                                        ))}
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label htmlFor="account-currency" className={labelClass}>
-                                        Currency
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold">
+                                    Basic Information
+                                </h3>
+                                <div className="space-y-1.5">
+                                    <label htmlFor="account-name" className={labelClass}>
+                                        Account name
+                                    </label>
+                                    <input
+                                        id="account-name"
+                                        type="text"
+                                        className={fieldClass}
+                                        value={accountName}
+                                        onChange={(e) => setAccountName(e.target.value)}
+                                        placeholder="e.g. BDO Savings"
+                                        autoFocus
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label htmlFor="account-type" className={labelClass}>
+                                        Account type
                                     </label>
                                     <select
-                                        id="account-currency"
+                                        id="account-type"
                                         className={fieldClass}
-                                        value={currency}
-                                        onChange={(e) => setCurrency(e.target.value)}
+                                        value={type}
+                                        disabled
+                                        onChange={(e) =>
+                                            setType(
+                                                e.target.value === ""
+                                                    ? ""
+                                                    : Number(e.target.value) as AccountType
+                                            )
+                                        }
                                     >
-                                        {currencies.map((item) => (
-                                            <option key={item.code} value={item.code}>
-                                                {item.code} ({item.symbol})
-                                            </option>
-                                        ))}
+                                        <option value="">Select account type</option>
+                                        {Object.entries(AccountType)
+                                            .filter(([key]) => isNaN(Number(key)))
+                                            .map(([key, value]) => (
+                                                <option key={value} value={value}>
+                                                    {formatEnumLabel(key)}
+                                                </option>
+                                            ))}
                                     </select>
                                 </div>
-
+                            </div>
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold">
+                                    Balance & Currency
+                                </h3>
                                 <div>
-                                    <label htmlFor="initial-balance" className={labelClass}>
-                                        Initial balance
-                                    </label>
-                                    <div className="relative">
-                                        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
-                                            {selectedCurrency?.symbol ?? ""}
-                                        </span>
-                                        <input
-                                            id="initial-balance"
-                                            type="number"
-                                            step="0.01"
-                                            className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                                            value={initialBalance}
-                                            onChange={(e) => setInitialBalance(e.target.value)}
-                                            placeholder="0.00"
-                                        />
+                                    <div className={`grid ${isPhysicalCash ? "grid-cols-1" : "grid-cols-2"} gap-4`}>
+                                        <div className="min-w-0 space-y-1.5">
+                                            <label htmlFor="account-currency" className={labelClass}>
+                                                Currency
+                                            </label>
+                                            <select
+                                                id="account-currency"
+                                                className={fieldClass}
+                                                value={currency}
+                                                onChange={(e) => setCurrency(e.target.value)}
+                                            >
+                                                {currencies.map((item) => (
+                                                    <option key={item.code} value={item.code}>
+                                                        {item.code} ({item.symbol})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        {!isPhysicalCash && (
+                                            <div className="min-w-0 space-y-1.5">
+                                                <label htmlFor="initial-balance" className={labelClass}>
+                                                    Initial balance
+                                                </label>
+                                                <div className="relative">
+                                                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                                                        {selectedCurrency?.symbol ?? ""}
+                                                    </span>
+                                                    <input
+                                                        id="initial-balance"
+                                                        type="number"
+                                                        step="0.01"
+                                                        className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                                                        value={initialBalance}
+                                                        onChange={(e) => setInitialBalance(e.target.value)}
+                                                        placeholder="0.00"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
 
                             {error && (
-                                <p className="text-sm text-expense">{error}</p>
+                                <div className="rounded-md border border-expense/30 bg-expense/5 px-3 py-2">
+                                    <p className="text-sm text-expense">
+                                        {error}
+                                    </p>
+                                </div>
                             )}
                         </div>
 
