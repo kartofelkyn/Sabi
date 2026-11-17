@@ -11,10 +11,10 @@ import DateRangePicker from "@/components/common/DateRangePicker";
 import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";
 
 import type { DateRange } from "react-day-picker";
-import type { Transaction } from "@/types/transaction/Transaction";
-import type { CreateTransactionDto } from "@/types/transaction/CreateTransactionDto";
+import type { Transaction } from "@/types/transactions/TransactionType";
+import type { CreateTransactionDto } from "@/types/transactions/CreateTransactionDto";
 import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
-import type { SelectedTransactionDto } from "@/types/transaction/SelectedTransactionDto";
+import type { SelectedTransactionDto } from "@/types/transactions/SelectedTransactionDto";
 
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from "@/services/transaction.service";
 import { getFinanceSummary } from "@/services/finance.service";
@@ -26,7 +26,7 @@ import {
   ChevronRight,
   ChevronLeft
 } from "lucide-react";
-import { EditTransactionDto } from "@/types/transaction/EditTransactionDto";
+import { EditTransactionDto } from "@/types/transactions/EditTransactionDto";
 
 export default function TransactionsPage() {
   const [accountOptions, setAccountOptions] = useState<AccountsDropdown[] | null>(null);
@@ -248,7 +248,9 @@ export default function TransactionsPage() {
     currentPage,
     pageSize
   ])
-
+  useEffect(() => {
+    console.log(transactionList)
+  }, [transactionList])
   // Reset page if filtered
   const handleAccountChange = (value: number | null) => {
     setAccountId(value);
@@ -315,7 +317,7 @@ export default function TransactionsPage() {
   }
 
   async function removeTransaction() {
-    if (selectedTransaction === null ) return;
+    if (selectedTransaction === null) return;
     if (selectedTransaction.id === null || selectedTransaction.id < 0) return;
 
     await deleteTransaction(selectedTransaction.id);
@@ -464,10 +466,10 @@ export default function TransactionsPage() {
           <table className="w-full text-left border-collapse">
             <colgroup>
               <col className="w-[10%]" />
-              <col className="w-[15%]" />
-              <col className="w-[15%]" />
               <col className="w-[20%]" />
+              <col className="w-[15%]" />
               <col className="w-[25%]" />
+              <col className="w-[15%]" />
               <col className="w-[15%]" />
             </colgroup>
 
@@ -565,7 +567,12 @@ export default function TransactionsPage() {
                         </button>
                       </td>
                       <td className="px-4 py-3 text-sm truncate">
-                        {transaction.accountName}
+                        {transaction.accountName} {transaction.isAccountDeleted}
+                        {transaction.isAccountDeleted && (
+                          <span className="ml-1 text-xs text-muted-foreground">
+                            (deleted)
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm truncate">
                         {transaction.categoryName}

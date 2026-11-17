@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import type { CreateTransactionDto } from "@/types/transaction/CreateTransactionDto";
+import type { CreateTransactionDto } from "@/types/transactions/CreateTransactionDto";
 import type { Status } from "@/types/common/submitStatus";
 import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
 import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";

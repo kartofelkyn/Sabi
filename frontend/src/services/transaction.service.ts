@@ -1,8 +1,8 @@
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 
-import {  Transaction, TransactionFilters, PagedResponse } from "@/types/transaction/Transaction";
-import { EditTransactionDto } from "@/types/transaction/EditTransactionDto";
-import { CreateTransactionDto } from "@/types/transaction/CreateTransactionDto";
+import { Transaction, TransactionFilters, PagedResponse } from "@/types/transactions/TransactionType";
+import { EditTransactionDto } from "@/types/transactions/EditTransactionDto";
+import { CreateTransactionDto } from "@/types/transactions/CreateTransactionDto";
 
 const ENDPOINT = "transactions";
 

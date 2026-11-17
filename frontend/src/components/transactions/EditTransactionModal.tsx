@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { getTransaction } from "@/services/transaction.service";
 
-import type { EditTransactionDto } from "@/types/transaction/EditTransactionDto";
+import type { EditTransactionDto } from "@/types/transactions/EditTransactionDto";
 import type { Status } from "@/types/common/submitStatus";
 import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
 import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";
