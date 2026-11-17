@@ -4,8 +4,10 @@ namespace Sabi.Api.DTOs;
 public class TransactionResponseDto
 {
     public int Id { get; set;}
+    
     public int AccountId { get; set; }
     public string AccountName { get; set; } = string.Empty;
+    public bool IsAccountDeleted { get; set; }
 
     public int CategoryId { get; set; }
     public string CategoryName { get; set; } = string.Empty;

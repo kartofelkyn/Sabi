@@ -37,6 +37,7 @@ public class FinanceService
             .Where(t => !t.IsDeleted);
 
         decimal totalInitialBalance = await _context.Accounts
+            .Where(a => !a.IsDeleted)
             .SumAsync(a => a.InitialBalance);
 
         if (startDate.HasValue)

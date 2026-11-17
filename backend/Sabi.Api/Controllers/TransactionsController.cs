@@ -99,6 +99,7 @@ public class TransactionsController : ControllerBase
                 Id = t.Id,
                 AccountId = t.AccountId,
                 AccountName = t.Account.Name,
+                IsAccountDeleted = t.Account.IsDeleted,
                 CategoryId = t.CategoryId,
                 CategoryName = t.Category.Name,
                 Type = t.Type,
@@ -147,7 +148,7 @@ public class TransactionsController : ControllerBase
     )
     {
         var account = await _context.Accounts
-            .FirstOrDefaultAsync(a => a.Id == request.AccountId);
+            .FirstOrDefaultAsync(a => a.Id == request.AccountId && !a.IsDeleted);
 
         if (account == null)
         {
@@ -358,7 +359,7 @@ public class TransactionsController : ControllerBase
         }
 
         var originalAccount = await _context.Accounts
-            .FirstOrDefaultAsync(a => a.Id == transaction.AccountId);
+            .FirstOrDefaultAsync(a => a.Id == transaction.AccountId && !a.IsDeleted);
 
         if (originalAccount == null)
         {
@@ -366,7 +367,7 @@ public class TransactionsController : ControllerBase
         }
 
         var newAccount = await _context.Accounts
-            .FirstOrDefaultAsync(a => a.Id == request.AccountId);
+            .FirstOrDefaultAsync(a => a.Id == request.AccountId && !a.IsDeleted);
 
         if (newAccount == null)
         {
@@ -718,6 +719,7 @@ public class TransactionsController : ControllerBase
             Id = transaction.Id,
             AccountId = transaction.AccountId,
             AccountName = transaction.Account?.Name ?? string.Empty,
+            IsAccountDeleted = transaction.Account?.IsDeleted ?? false,
             CategoryId = transaction.CategoryId,
             CategoryName = transaction.Category?.Name ?? string.Empty,
             Type = transaction.Type,

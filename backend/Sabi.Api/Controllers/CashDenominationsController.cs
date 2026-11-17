@@ -31,6 +31,7 @@ public class CashDenominationController : ControllerBase
     {
         var account = await _context.Accounts
             .AsNoTracking()
+            .Where(a => !a.IsDeleted)
             .FirstOrDefaultAsync(a=> a.Id == accountId);
 
         if (account == null)
@@ -81,7 +82,7 @@ public class CashDenominationController : ControllerBase
         [FromBody] List<UpdateCashDenominationDto> request)
     {
         var account = await _context.Accounts
-            .FirstOrDefaultAsync(a => a.Id == accountId);
+            .FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted);
 
         if (account == null)
             return NotFound("Account not found.");

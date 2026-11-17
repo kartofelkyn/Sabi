@@ -4,6 +4,7 @@ export interface Transaction {
     id: number;
     accountId: number;
     accountName: string;
+    isAccountDeleted: boolean;
     categoryId: number;
     categoryName: string;
     type: TransactionTypeEnum;
