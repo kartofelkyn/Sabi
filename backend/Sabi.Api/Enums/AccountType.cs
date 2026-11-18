@@ -3,5 +3,6 @@ public enum AccountType
     EWallet,
     TraditionalBank,
     PhysicalCash,
-    SavingsAccount
+    SavingsAccount,
+    Credit
 }
