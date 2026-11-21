@@ -13,10 +13,12 @@ import { transactionTypeOptions } from "@/constants/transactions/transaction-typ
 import type { DateRange } from "react-day-picker";
 import type { Transaction } from "@/types/transactions/TransactionType";
 import type { CreateTransactionDto } from "@/types/transactions/CreateTransactionDto";
+import type { CreateCreditPaymentDto } from "@/types/creditPayment/CreateCreditPaymentDto";
 import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
 import type { SelectedTransactionDto } from "@/types/transactions/SelectedTransactionDto";
 
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from "@/services/transaction.service";
+import { createCreditPayment } from "@/services/creditPayment.service";
 import { getFinanceSummary } from "@/services/finance.service";
 import { getAccountsDropdown, getCategoriesDropdown } from "@/services/common/dropdown.service";
 import {
@@ -274,10 +276,26 @@ export default function TransactionsPage() {
 
   async function handleCreateTransaction(data: CreateTransactionDto) {
 
-    console.log("data: ", data);
-
     await createTransaction(data);
 
+    const updatedTransactions = await getTransactions({
+      accountId: accountId ?? undefined,
+      categoryId: categoryId ?? undefined,
+      type: transactionType ?? undefined,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+      page: currentPage,
+      pageSize
+    })
+
+    setTransactionList(updatedTransactions.data);
+    setTotalCount(updatedTransactions.totalCount);
+    setTotalPages(updatedTransactions.totalPages);
+  }
+
+  async function handleCreateCreditPayment(data: CreateCreditPaymentDto) {
+    await createCreditPayment(data);
+    
     const updatedTransactions = await getTransactions({
       accountId: accountId ?? undefined,
       categoryId: categoryId ?? undefined,
@@ -681,7 +699,8 @@ export default function TransactionsPage() {
         type={transactionTypeOptions ?? []}
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleCreateTransaction}
+        onSubmitTransaction={handleCreateTransaction}
+        onSubmitCreditPayment={handleCreateCreditPayment}
       />
       <EditTransactionModal
         transactionId={selectedTransaction?.id ?? null}

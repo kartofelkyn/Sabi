@@ -2,5 +2,6 @@ export enum AccountType {
     EWallet = 0,
     TraditionalBank = 1,
     PhysicalCash = 2,
-    SavingsAccount = 3
+    SavingsAccount = 3,
+    CreditAccount = 4
 }
