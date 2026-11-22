@@ -59,7 +59,7 @@ export default function AddTransactionModal({
     const [cashQuantities, setCashQuantities] = useState<Record<string, string>>({});
     const [description, setDescription] = useState("");
     const [transactionDate, setTransactionDate] = useState("");
-
+    // Credit input
     const [accountIdFrom, setAccountIdFrom] = useState<number | null>(null);
     const [accountIdTo, setAccountIdTo] = useState<number | null>(null);
 
@@ -67,13 +67,13 @@ export default function AddTransactionModal({
         (account) => account.type === AccountType.CreditAccount
     );
 
-
     const selectedAccount = accounts.find(
         (account) => account.id === accountId
     );
 
     const isPhysicalCash = selectedAccount?.type === 2;
     const isCreditPayment = transactionType == TransactionTypeEnum.Credit;
+    
     const cashTotal = denominations.reduce((total, denomination) => {
         const quantity = Number(cashQuantities[String(denomination)] || 0);
 
@@ -123,6 +123,8 @@ export default function AddTransactionModal({
         setInitialAmount("");
         setDescription("");
         setTransactionDate("");
+        setAccountIdFrom(null);
+        setAccountIdTo(null);
         setError(null);
         setStatus("idle");
         setCashQuantities({});

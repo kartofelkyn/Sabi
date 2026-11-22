@@ -1,6 +1,6 @@
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 
-import { Transaction, TransactionFilters, PagedResponse } from "@/types/transactions/TransactionType";
+import { TransactionHistory, Transaction, TransactionFilters, PagedResponse } from "@/types/transactions/TransactionType";
 import { EditTransactionDto } from "@/types/transactions/EditTransactionDto";
 import { CreateTransactionDto } from "@/types/transactions/CreateTransactionDto";
 
@@ -8,7 +8,7 @@ const ENDPOINT = "transactions";
 
 export async function getTransactions(
     filters: TransactionFilters = {}
-): Promise<PagedResponse<Transaction>> {
+): Promise<PagedResponse<TransactionHistory>> {
     const params = new URLSearchParams();
     
     if (filters.accountId !== undefined) {
@@ -34,7 +34,7 @@ export async function getTransactions(
     params.append("page", (filters.page ?? 1).toString());
     params.append("pageSize", (filters.pageSize ?? 10).toString());
 
-    return apiGet<PagedResponse<Transaction>>(
+    return apiGet<PagedResponse<TransactionHistory>>(
         `${ENDPOINT}?${params.toString()}`
     );
 }
