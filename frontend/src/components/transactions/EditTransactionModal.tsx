@@ -8,7 +8,7 @@ import type { EditTransactionDto } from "@/types/transactions/EditTransactionDto
 import type { EditCreditPaymentDto } from "@/types/creditPayment/EditCreditPaymentDto";
 import type { Status } from "@/types/common/submitStatus";
 import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
-import { AccountType } from "@/types/accounts/AccountType";
+import { AccountType } from "@/enums/AccountType";
 import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";
 import { TransactionTypeEnum } from "@/enums/transaction-type";
 

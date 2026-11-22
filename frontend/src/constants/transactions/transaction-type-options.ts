@@ -4,3 +4,5 @@ export const transactionTypeOptions = [
     { id: TransactionTypeEnum.Income, name: "Income" },
     { id: TransactionTypeEnum.Expense, name: "Expense" },
 ];
+
+export type TransactionTypeName = "Income" | "Expense" | "Credit";

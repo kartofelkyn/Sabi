@@ -11,13 +11,16 @@ import { EditAccount } from "@/services/account.service";
 import type { EditAccountDto } from "@/types/accounts/EditAccountDto";
 import { DeleteAccount } from "@/services/account.service";
 
+import ViewAccountModal from "@/components/accounts/ViewAccountModal";
+
 import type { AccountSummary } from "@/types/accounts/AccountsSummary";
 import type { AccountTransaction } from "@/types/accounts/AccountTransaction";
+import { AccountType } from "@/enums/AccountType";
 
 import { GetAccountSummary } from "@/services/account.service";
 import { GetAccountTransaction } from "@/services/account.service";
 
-import { SquarePen, CreditCardPlus } from "lucide-react";
+import { SquarePen, CreditCardPlus, Eye } from "lucide-react";
 
 export default function AccountsPage() {
   const [accountList, setAccountList] = useState<AccountSummary[]>([]);
@@ -33,6 +36,7 @@ export default function AccountsPage() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -238,21 +242,36 @@ export default function AccountsPage() {
                   `}>
                       {account.accountName}
                     </p>
-                    {account.accountId !== 0 && (
-                      <button
-                        type="button"
-                        aria-label={`Edit ${account.accountName}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedAccountId(account.accountId);
-                          setSelectedAccountName(account.accountName);
-                          setIsEditModalOpen(true);
-                        }}
-                      >
-                        <SquarePen size={15} />
-                      </button>
-                    )}
-
+                    <div className="flex flex-row gap-2">
+                      {account.accountType === AccountType.PhysicalCash && (
+                        <button
+                          type="button"
+                          aria-label={`Edit ${account.accountName}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAccountId(account.accountId);
+                            setSelectedAccountName(account.accountName);
+                            setIsViewModalOpen(true);
+                          }}
+                        >
+                          <Eye size={15} />
+                        </button>
+                      )}
+                      {account.accountId !== 0 && (
+                        <button
+                          type="button"
+                          aria-label={`Edit ${account.accountName}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAccountId(account.accountId);
+                            setSelectedAccountName(account.accountName);
+                            setIsEditModalOpen(true);
+                          }}
+                        >
+                          <SquarePen size={15} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="accounts-info flex flex-col gap-0.5">
                     <div className="balance flex flex-row justify-between pr-3">
@@ -404,6 +423,11 @@ export default function AccountsPage() {
         onClose={() => setIsEditModalOpen(false)}
         onSubmit={handleEditAccount}
         onDelete={handleDeleteAccount}
+      />
+      <ViewAccountModal
+        selectedAccount={selectedAccountId ?? -1}
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
       />
     </div>
   )

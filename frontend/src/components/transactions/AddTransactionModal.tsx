@@ -13,7 +13,7 @@ import { Spinner, CheckIcon, ErrorIcon } from "../common/FormSubmitIcon";
 import { sleep } from "@/utils/sleep";
 import { X, TrendingUp, TrendingDown, CreditCard } from "lucide-react";
 import { TransactionTypeEnum } from "@/enums/transaction-type";
-import { AccountType } from "@/types/accounts/AccountType";
+import { AccountType } from "@/enums/AccountType";
 
 interface AddTransactionModalProps {
     accounts: AccountsDropdown[],

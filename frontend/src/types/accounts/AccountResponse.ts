@@ -1,4 +1,4 @@
-import type { AccountType } from "./AccountType";
+import type { AccountType } from "../../enums/AccountType";
 
 export interface AccountResponse {
     id: number;

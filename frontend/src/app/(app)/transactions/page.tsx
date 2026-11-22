@@ -17,6 +17,7 @@ import type { CreateCreditPaymentDto } from "@/types/creditPayment/CreateCreditP
 import type { EditCreditPaymentDto } from "@/types/creditPayment/EditCreditPaymentDto";
 import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
 import type { SelectedTransactionDto } from "@/types/transactions/SelectedTransactionDto";
+import { TransactionTypeEnum } from "@/enums/transaction-type";
 
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from "@/services/transaction.service";
 import { createCreditPayment, updateCreditPayment, deleteCreditPayment } from "@/services/creditPayment.service";
@@ -567,7 +568,7 @@ export default function TransactionsPage() {
                       ? "bg-transaction-card-1 text-transaction-card-1-foreground"
                       : "bg-transaction-card-2 text-transaction-card-2-foreground";
 
-                  const isIncome = transaction.type === 1;
+                  const isIncome = transaction.type === "Income";
 
                   return (
                     <tr
@@ -588,7 +589,10 @@ export default function TransactionsPage() {
                               creditAccountId: transaction.creditAccountId,
                               creditAccountName: transaction.creditAccountName,
                               categoryName: transaction.categoryName,
-                              transactionType: transaction.type === 1 ? "Income" : "Expense",
+                              transactionType:
+                                transaction.type === "Income"
+                                  ? "Income"
+                                  : "Expense",
                               amount: transaction.amount,
                               description: transaction.description ?? "",
                               transactionDate: transaction.transactionDate,
@@ -612,7 +616,10 @@ export default function TransactionsPage() {
                               creditAccountId: transaction.creditAccountId,
                               creditAccountName: transaction.creditAccountName,
                               categoryName: transaction.categoryName,
-                              transactionType: transaction.type === 1 ? "Income" : "Expense",
+                              transactionType:
+                                transaction.type === "Income"
+                                  ? "Income"
+                                  : "Expense",
                               amount: transaction.amount,
                               description: transaction.description ?? "",
                               transactionDate: transaction.transactionDate,
