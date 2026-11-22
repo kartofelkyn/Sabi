@@ -66,14 +66,17 @@ export default function AddTransactionModal({
     const creditAccounts = accounts.filter(
         (account) => account.type === AccountType.CreditAccount
     );
+    const nonCreditAccounts = accounts.filter(
+        (account) => account.type !== AccountType.CreditAccount
+    );
 
     const selectedAccount = accounts.find(
         (account) => account.id === accountId
     );
 
-    const isPhysicalCash = selectedAccount?.type === 2;
+    const isPhysicalCash = selectedAccount?.type === AccountType.PhysicalCash;
     const isCreditPayment = transactionType == TransactionTypeEnum.Credit;
-    
+
     const cashTotal = denominations.reduce((total, denomination) => {
         const quantity = Number(cashQuantities[String(denomination)] || 0);
 
@@ -89,7 +92,7 @@ export default function AddTransactionModal({
 
     useEffect(() => {
         if (!isOpen) return;
-        console.log(creditAccounts);
+
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key == "Escape") {
                 resetForm();
@@ -153,7 +156,9 @@ export default function AddTransactionModal({
             }
 
             const amount = isPhysicalCash
-                ? cashTotal
+                ? (transactionType == TransactionTypeEnum.Income
+                    ? cashTotal
+                    : -cashTotal)
                 : Number(initialAmount);
 
             if (
@@ -163,15 +168,30 @@ export default function AddTransactionModal({
                 return setError("Enter an amount greater than zero.");
             }
 
-            if (
-                isPhysicalCash &&
-                Object.values(cashQuantities).some(
-                    (quantity) =>
-                        quantity !== "" &&
-                        (!Number.isInteger(Number(quantity)) || Number(quantity) < 0)
-                )
-            ) {
-                return setError("Denomination quantities must be non-negative whole numbers.");
+            if (isPhysicalCash) {
+                const quantities = Object.values(cashQuantities).map(Number);
+                
+                if (quantities.some(quantity => !Number.isFinite(quantity))) {
+                    return setError("Invalid denomination quantity.");
+                }
+
+                if (quantities.some(quantity => !Number.isInteger(quantity))) {
+                    return setError("Denomination quantities must be whole numbers.");
+                }
+
+                if (
+                    transactionType === TransactionTypeEnum.Income &&
+                    quantities.some(quantity => quantity < 0)
+                ) {
+                    return setError("Income denomination quantities cannot be negative.");
+                }
+
+                if (
+                    transactionType === TransactionTypeEnum.Expense &&
+                    quantities.every(quantity => quantity === 0)
+                ) {
+                    return setError("Enter at least one cash denomination.");
+                }
             }
 
             const cashDenomation = denominations
@@ -179,7 +199,7 @@ export default function AddTransactionModal({
                     denominationValue: denomination,
                     quantity: Number(cashQuantities[String(denomination)] || 0)
                 }))
-                .filter((item) => item.quantity > 0);
+                .filter((item) => item.quantity !== 0);
 
             const transactionData: CreateTransactionDto = {
                 accountId: accountId,
@@ -346,7 +366,7 @@ export default function AddTransactionModal({
                                                     id="account"
                                                     name="account"
                                                     label="From Account"
-                                                    options={accounts.map((item) => ({
+                                                    options={nonCreditAccounts.map((item) => ({
                                                         value: item.id,
                                                         label: item.name,
                                                     }))}
@@ -386,9 +406,7 @@ export default function AddTransactionModal({
                                                         type="number"
                                                         step="0.01"
                                                         className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                                                        value={isPhysicalCash ? cashTotal.toFixed(2) : initialAmount}
-                                                        disabled={isPhysicalCash}
-                                                        readOnly={isPhysicalCash}
+                                                        value={initialAmount}
                                                         onChange={(e) => setInitialAmount(e.target.value)}
                                                         placeholder="0.00"
                                                     />
@@ -418,11 +436,11 @@ export default function AddTransactionModal({
                                             </label>
                                             <textarea
                                                 id="description"
-                                                className={`${fieldClass} min-h-20 resize-none`}
+                                                className={`${fieldClass} min-h-0 resize-none`}
                                                 value={description}
                                                 onChange={(e) => setDescription(e.target.value)}
                                                 placeholder="Enter description."
-                                                rows={3}
+                                                rows={1}
                                             />
                                         </div>
                                     </div>
@@ -497,7 +515,14 @@ export default function AddTransactionModal({
                                                         type="number"
                                                         step="0.01"
                                                         className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                                                        value={isPhysicalCash ? cashTotal.toFixed(2) : initialAmount}
+                                                        value={
+                                                            isPhysicalCash
+                                                                ? (transactionType === TransactionTypeEnum.Income
+                                                                    ? cashTotal
+                                                                    : -cashTotal
+                                                                ).toFixed(2)
+                                                                : initialAmount
+                                                        }
                                                         disabled={isPhysicalCash}
                                                         readOnly={isPhysicalCash}
                                                         onChange={(e) => setInitialAmount(e.target.value)}
@@ -530,7 +555,7 @@ export default function AddTransactionModal({
                                                             <input
                                                                 id={`denomination-${denomination}`}
                                                                 type="number"
-                                                                min="0"
+                                                                min={transactionType === TransactionTypeEnum.Income ? "0" : undefined}
                                                                 step="1"
                                                                 className={`${cashFieldClass} min-w-0 flex-1`}
                                                                 value={cashQuantities[String(denomination)] ?? ""}
@@ -553,11 +578,11 @@ export default function AddTransactionModal({
                                             </label>
                                             <textarea
                                                 id="description"
-                                                className={`${fieldClass} min-h-20 resize-none`}
+                                                className={`${fieldClass} min-h-0 resize-none`}
                                                 value={description}
                                                 onChange={(e) => setDescription(e.target.value)}
                                                 placeholder="Enter description."
-                                                rows={3}
+                                                rows={1}
                                             />
                                         </div>
                                     </div>
