@@ -93,9 +93,6 @@ public class CashDenominationController : ControllerBase
         if (request == null)
             return BadRequest("Request is required.");
 
-        if (request.Any(d => d.Quantity < 0))
-            return BadRequest("Quantity cannot be negative.");
-
         if (request.Any(d =>
             !Denominations.Contains(d.DenominationValue)))
         {
