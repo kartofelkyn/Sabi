@@ -16,11 +16,15 @@ namespace Sabi.Api.Data
         public DbSet<NavItem> NavItems => Set<NavItem>();
         public DbSet<CashDenomination> CashDenominations => Set<CashDenomination>();
         public DbSet<TransactionCashDenomination> TransactionCashDenominations => Set<TransactionCashDenomination>();
+        public DbSet<CreditPayment> CreditPayments => Set<CreditPayment>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Account>(entity =>
             {
                 entity.Property(a => a.InitialBalance)
+                    .HasPrecision(18, 2);
+
+                entity.Property(a => a.CreditLimit)
                     .HasPrecision(18, 2);
 
                 entity.Property(a => a.Name)
@@ -99,6 +103,25 @@ namespace Sabi.Api.Data
                     .IsUnique();
                 entity.Property(c => c.DenominationValue)
                     .HasPrecision(18, 2);
+            });
+
+            modelBuilder.Entity<CreditPayment>(entity =>
+            {
+                entity.Property(p => p.Amount)
+                    .HasPrecision(18, 2);
+
+                entity.Property(p => p.Description)
+                    .HasMaxLength(500);
+
+                entity.HasOne(p => p.SourceAccount)
+                    .WithMany()
+                    .HasForeignKey(p => p.SourceAccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(p => p.CreditAccount)
+                    .WithMany()
+                    .HasForeignKey(p => p.CreditAccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

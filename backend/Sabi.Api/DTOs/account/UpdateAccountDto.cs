@@ -18,4 +18,7 @@ public class UpdateAccountDto
 
     [Required]
     public AccountType Type { get; set; }
+
+    [Range(typeof(decimal), "0.01", "79228162514264337593543950335")]
+    public decimal? CreditLimit { get; set; }
 }

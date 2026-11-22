@@ -7,6 +7,8 @@ namespace Sabi.Api.Models
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public decimal InitialBalance { get; set; }
+        // Credit Card
+        public decimal? CreditLimit { get; set; }
         public AccountType Type { get; set; }
         public string Currency { get; set; } = "PHP";
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -56,67 +56,139 @@ public class TransactionsController : ControllerBase
         {
             return BadRequest("End date is out of supported range");
         }
-        IQueryable<Transaction> query = _context.Transactions
-            .Where(t => t.IsDeleted == false)
-            .AsNoTracking();
+
+        // Normal transactions
+        var transactionsQuery = _context.Transactions
+            .Where(t => !t.IsDeleted);
 
         if (accountId.HasValue)
         {
-            query = query.Where(t => t.AccountId == accountId.Value);
+            transactionsQuery = transactionsQuery.Where(t => t.AccountId == accountId.Value);
         }
         if (categoryId.HasValue)
         {
-            query = query.Where(t => t.CategoryId == categoryId.Value);
+            transactionsQuery = transactionsQuery.Where(t => t.CategoryId == categoryId.Value);
         }
         if (type.HasValue)
         {
-            query = query.Where(t => t.Type == type.Value);
+            transactionsQuery = transactionsQuery.Where(t => t.Type == type.Value);
         }
+
         if (startDate.HasValue)
         {
             var start = startDate.Value.Date;
-            query = query.Where(t => t.TransactionDate >= start);
+            transactionsQuery = transactionsQuery.Where(t => t.TransactionDate >= start);
         }
         if (endDate.HasValue)
         {
             var exclusiveEnd = endDate.Value.Date.AddDays(1);
-            query = query.Where(t => t.TransactionDate < exclusiveEnd);
+            transactionsQuery = transactionsQuery.Where(t => t.TransactionDate < exclusiveEnd);
         }
 
-        int totalCount = await query.CountAsync();
+        // Credit Transactions
 
-        int totalPages = (int)Math.Ceiling(
+        var creditPaymentsQuery = _context.CreditPayments
+            .Where(cp => !cp.IsDeleted);
+
+        if (accountId.HasValue)
+        {
+            creditPaymentsQuery = creditPaymentsQuery.Where(cp =>
+                cp.SourceAccountId == accountId ||
+                cp.CreditAccountId == accountId
+            );
+        }
+
+        if (categoryId.HasValue)
+        {
+            creditPaymentsQuery = creditPaymentsQuery.Where(cp => false);
+        }
+
+        if (type.HasValue)
+        {
+            creditPaymentsQuery = creditPaymentsQuery.Where(cp => false);
+        }
+        if (startDate.HasValue)
+        {
+            var start = startDate.Value.Date;
+            creditPaymentsQuery = creditPaymentsQuery.Where(cp => cp.PaymentDate >= start);
+        }
+        if (endDate.HasValue)
+        {
+            var exclusiveEnd = endDate.Value.Date.AddDays(1);
+            creditPaymentsQuery = creditPaymentsQuery.Where(cp => cp.PaymentDate <= exclusiveEnd);
+        }
+
+        var transactionCount = await transactionsQuery.CountAsync();
+        var creditPaymentCount = await creditPaymentsQuery.CountAsync();
+
+        var totalCount = transactionCount + creditPaymentCount;
+
+        var totalPages = (int)Math.Ceiling(
             (double)totalCount / pageSize
         );
 
-        var transactions = await query
+        var recordsToFetch = page * pageSize;
+
+        var transactions = await transactionsQuery
+        .OrderByDescending(t => t.TransactionDate)
+        .ThenByDescending(t => t.Id)
+        .Take(recordsToFetch)
+        .Select(t => new TransactionHistoryResponseDto
+        {
+            Id = t.Id,
+            RecordType = "Transaction",
+            Type = t.Type.ToString(),
+            Amount = t.Amount,
+            Description = t.Description,
+            TransactionDate = t.TransactionDate,
+
+            AccountId = t.AccountId,
+            AccountName = t.Account.Name,
+            IsAccountDeleted = t.Account.IsDeleted,
+
+            CategoryId = t.CategoryId,
+            CategoryName = t.Category.Name
+        })
+        .ToListAsync();
+
+        var creditPayments = await creditPaymentsQuery
+            .OrderByDescending(cp => cp.PaymentDate)
+            .ThenByDescending(cp => cp.Id)
+            .Take(recordsToFetch)
+            .Select(cp => new TransactionHistoryResponseDto
+            {
+                Id = cp.Id,
+                RecordType = "CreditPayment",
+                Type = "CreditPayment",
+                Amount = cp.Amount,
+                Description = cp.Description,
+                TransactionDate = cp.PaymentDate,
+
+                SourceAccountId = cp.SourceAccountId,
+                SourceAccountName = cp.SourceAccount.Name,
+                IsSourceAccountDeleted = cp.SourceAccount.IsDeleted,
+
+                CreditAccountId = cp.CreditAccountId,
+                CreditAccountName = cp.CreditAccount.Name,
+                IsCreditAccountDeleted = cp.CreditAccount.IsDeleted
+            })
+            .ToListAsync();
+
+        var combinedRecords = transactions
+            .Concat(creditPayments)
             .OrderByDescending(t => t.TransactionDate)
             .ThenByDescending(t => t.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(t => new TransactionResponseDto
-            {
-                Id = t.Id,
-                AccountId = t.AccountId,
-                AccountName = t.Account.Name,
-                IsAccountDeleted = t.Account.IsDeleted,
-                CategoryId = t.CategoryId,
-                CategoryName = t.Category.Name,
-                Type = t.Type,
-                Amount = t.Amount,
-                Description = t.Description,
-                TransactionDate = t.TransactionDate,
-                CreatedAt = t.CreatedAt
-            })
-            .ToListAsync();
+            .ToList();
 
-        var response = new PagedResponseDto<TransactionResponseDto>
+        var response = new PagedResponseDto<TransactionHistoryResponseDto>
         {
             Page = page,
             PageSize = pageSize,
             TotalCount = totalCount,
             TotalPages = totalPages,
-            Data = transactions
+            Data = combinedRecords
         };
 
         return Ok(response);

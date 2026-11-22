@@ -11,12 +11,15 @@ import DateRangePicker from "@/components/common/DateRangePicker";
 import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";
 
 import type { DateRange } from "react-day-picker";
-import type { Transaction } from "@/types/transactions/TransactionType";
+import type { Transaction, TransactionHistory } from "@/types/transactions/TransactionType";
 import type { CreateTransactionDto } from "@/types/transactions/CreateTransactionDto";
+import type { CreateCreditPaymentDto } from "@/types/creditPayment/CreateCreditPaymentDto";
+import type { EditCreditPaymentDto } from "@/types/creditPayment/EditCreditPaymentDto";
 import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
 import type { SelectedTransactionDto } from "@/types/transactions/SelectedTransactionDto";
 
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from "@/services/transaction.service";
+import { createCreditPayment, updateCreditPayment, deleteCreditPayment } from "@/services/creditPayment.service";
 import { getFinanceSummary } from "@/services/finance.service";
 import { getAccountsDropdown, getCategoriesDropdown } from "@/services/common/dropdown.service";
 import {
@@ -43,7 +46,7 @@ export default function TransactionsPage() {
   const [financeSummaryError, setFinanceSummaryError] = useState<string | null>(null);
 
   // Data
-  const [transactionList, setTransactionList] = useState<Transaction[]>([]);
+  const [transactionList, setTransactionList] = useState<TransactionHistory[]>([]);
   const [isTransactionLoading, setIsTransactionLoading] = useState(false);
   const [transactionError, setTransactionError] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<SelectedTransactionDto | null>(null);
@@ -249,8 +252,9 @@ export default function TransactionsPage() {
     pageSize
   ])
   useEffect(() => {
-    console.log(transactionList)
-  }, [transactionList])
+    console.log("Transaction list:", transactionList);
+  }, [transactionList]);
+
   // Reset page if filtered
   const handleAccountChange = (value: number | null) => {
     setAccountId(value);
@@ -274,8 +278,6 @@ export default function TransactionsPage() {
 
   async function handleCreateTransaction(data: CreateTransactionDto) {
 
-    console.log("data: ", data);
-
     await createTransaction(data);
 
     const updatedTransactions = await getTransactions({
@@ -293,11 +295,27 @@ export default function TransactionsPage() {
     setTotalPages(updatedTransactions.totalPages);
   }
 
-  async function editTransaction(data: EditTransactionDto) {
+  async function handleCreateCreditPayment(data: CreateCreditPaymentDto) {
+    await createCreditPayment(data);
+
+    const updatedTransactions = await getTransactions({
+      accountId: accountId ?? undefined,
+      categoryId: categoryId ?? undefined,
+      type: transactionType ?? undefined,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+      page: currentPage,
+      pageSize
+    })
+
+    setTransactionList(updatedTransactions.data);
+    setTotalCount(updatedTransactions.totalCount);
+    setTotalPages(updatedTransactions.totalPages);
+  }
+
+  async function handleEditTransaction(data: EditTransactionDto) {
     if (selectedTransaction === null) return;
     if (selectedTransaction.id === null || selectedTransaction.id < 0) return;
-
-    console.log("data: ", data);
 
     await updateTransaction(selectedTransaction.id, data);
 
@@ -316,11 +334,38 @@ export default function TransactionsPage() {
     setTotalPages(updatedTransactions.totalPages);
   }
 
+  async function handleEditCreditPayment(data: EditCreditPaymentDto) {
+    if (selectedTransaction === null) return;
+
+    if (selectedTransaction.id === null || selectedTransaction.id < 0) return;
+
+    await updateCreditPayment(selectedTransaction.id, data);
+
+    const updatedTransactions = await getTransactions({
+      accountId: accountId ?? undefined,
+      categoryId: categoryId ?? undefined,
+      type: transactionType ?? undefined,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+      page: currentPage,
+      pageSize
+    })
+
+    setTransactionList(updatedTransactions.data);
+    setTotalCount(updatedTransactions.totalCount);
+    setTotalPages(updatedTransactions.totalPages);
+  }
   async function removeTransaction() {
     if (selectedTransaction === null) return;
     if (selectedTransaction.id === null || selectedTransaction.id < 0) return;
 
-    await deleteTransaction(selectedTransaction.id);
+    if (selectedTransaction.recordType == "Transaction") {
+      await deleteTransaction(selectedTransaction.id);
+    } else if (selectedTransaction.recordType == "CreditPayment") {
+      await deleteCreditPayment(selectedTransaction.id);
+    } else {
+      return;
+    }
 
     const updatedTransactions = await getTransactions({
       accountId: accountId ?? undefined,
@@ -535,7 +580,13 @@ export default function TransactionsPage() {
                           onClick={() => {
                             setSelectedTransaction({
                               id: transaction.id,
+                              recordType: transaction.recordType,
+                              accountId: transaction.accountId,
                               accountName: transaction.accountName,
+                              sourceAccountId: transaction.sourceAccountId,
+                              sourceAccountName: transaction.sourceAccountName,
+                              creditAccountId: transaction.creditAccountId,
+                              creditAccountName: transaction.creditAccountName,
                               categoryName: transaction.categoryName,
                               transactionType: transaction.type === 1 ? "Income" : "Expense",
                               amount: transaction.amount,
@@ -553,7 +604,13 @@ export default function TransactionsPage() {
                           onClick={() => {
                             setSelectedTransaction({
                               id: transaction.id,
+                              recordType: transaction.recordType,
+                              accountId: transaction.accountId,
                               accountName: transaction.accountName,
+                              sourceAccountId: transaction.sourceAccountId,
+                              sourceAccountName: transaction.sourceAccountName,
+                              creditAccountId: transaction.creditAccountId,
+                              creditAccountName: transaction.creditAccountName,
                               categoryName: transaction.categoryName,
                               transactionType: transaction.type === 1 ? "Income" : "Expense",
                               amount: transaction.amount,
@@ -567,15 +624,47 @@ export default function TransactionsPage() {
                         </button>
                       </td>
                       <td className="px-4 py-3 text-sm truncate">
-                        {transaction.accountName} {transaction.isAccountDeleted}
-                        {transaction.isAccountDeleted && (
-                          <span className="ml-1 text-xs text-muted-foreground">
-                            (deleted)
-                          </span>
+                        {transaction.recordType == "Transaction" ? (
+                          <>
+                            {transaction.accountName}
+                            {transaction.isAccountDeleted && (
+                              <span className="ml-1 text-xs text-muted-foreground">
+                                (deleted)
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className={`truncate ${transaction.isSourceAccountDeleted
+                                  ? "line-through text-muted-foreground"
+                                  : "font-base"
+                                  }`}
+                              >
+                                {transaction.sourceAccountName ?? "Unknown Account"}
+                              </span>
+
+                              <ChevronRight
+                                size={14}
+                                className="shrink-0 text-muted-foreground"
+                              />
+
+                              <span
+                                className={`truncate ${transaction.isCreditAccountDeleted
+                                  ? "line-through text-muted-foreground"
+                                  : "font-base"
+                                  }`}
+                              >
+                                {transaction.creditAccountName ?? "Unknown Credit Account"}
+                              </span>
+                            </div>
+                          </>
                         )}
+
                       </td>
                       <td className="px-4 py-3 text-sm truncate">
-                        {transaction.categoryName}
+                        {transaction.recordType == "Transaction" ? transaction.categoryName : "Credit Payment"}
                       </td>
                       <td className="px-4 py-3 text-sm truncate">
                         {transaction.description || "-"}
@@ -584,11 +673,16 @@ export default function TransactionsPage() {
                         {formatDate(transaction.transactionDate)}
                       </td>
                       <td
-                        className={`px-4 py-3 text-sm font-semibold text-right whitespace-nowrap tabular-nums ${isIncome ? "text-income" : "text-expense"
+                        className={`px-4 py-3 text-sm font-semibold text-right whitespace-nowrap tabular-nums ${transaction.recordType === "CreditPayment"
+                          ? "text-foreground/80"
+                          : isIncome
+                            ? "text-income"
+                            : "text-expense"
                           }`}
                       >
-                        {isIncome ? "+" : "-"}
-                        {formatCurrency(transaction.amount)}
+                        {transaction.recordType === "CreditPayment"
+                          ? formatCurrency(transaction.amount)
+                          : `${isIncome ? "+" : "-"}${formatCurrency(transaction.amount)}`}
                       </td>
                     </tr>
                   );
@@ -681,16 +775,19 @@ export default function TransactionsPage() {
         type={transactionTypeOptions ?? []}
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleCreateTransaction}
+        onSubmitTransaction={handleCreateTransaction}
+        onSubmitCreditPayment={handleCreateCreditPayment}
       />
       <EditTransactionModal
         transactionId={selectedTransaction?.id ?? null}
+        recordType={selectedTransaction?.recordType ?? null}
         accounts={accountOptions ?? []}
         categories={categoryOptions ?? []}
         type={transactionTypeOptions ?? []}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        onSubmit={editTransaction}
+        onSubmitTransaction={handleEditTransaction}
+        onSubmitCreditPayment={handleEditCreditPayment}
       />
       <DeleteTransactionModal
         selectedTransaction={selectedTransaction}
