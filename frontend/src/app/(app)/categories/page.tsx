@@ -7,7 +7,7 @@ import SearchBar from '@/components/common/SearchBar';
 import Dropdown from '@/components/common/Dropdown';
 import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";
 
-import { GetCategorySummary, GetCategoryDetails, CreateCategory, UpdateCategory, DeleteCategory } from "@/services/category.service";
+import { GetCategorySummary, CreateCategory, UpdateCategory, DeleteCategory } from "@/services/category.service";
 import AddCategoryModal from "@/components/category/AddCategoryModal";
 import ViewCategoryModal from "@/components/category/ViewCategoryModal";
 import EditCategoryModal from "@/components/category/EditCategoryModal";
@@ -16,7 +16,6 @@ import DeleteCategoryModal from "@/components/category/DeleteCategoryModal";
 import type { CategoryBreakdown } from "@/types/category/CategorySummary";
 import type { CreateCategoryDto } from "@/types/category/CreateCategoryDto";
 import type { EditCategoryDto } from "@/types/category/EditCategoryDto";
-import type { CategoryDetails } from "@/types/category/CategoryDetail";
 
 export default function CategoriesPage() {
   // Data

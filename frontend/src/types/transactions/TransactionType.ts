@@ -1,4 +1,5 @@
 import type { TransactionTypeEnum } from "@/enums/transaction-type";
+import type { TransactionTypeName } from "@/constants/transactions/transaction-type-options";
 
 export interface TransactionHistory {
     id: number;
@@ -14,7 +15,7 @@ export interface TransactionHistory {
     isCreditAccountDeleted: boolean;
     categoryId: number;
     categoryName: string;
-    type: TransactionTypeEnum;
+    type: TransactionTypeName;
     amount: number;
     description: string;
     transactionDate: string;

@@ -243,6 +243,7 @@ public class AccountsController : ControllerBase
         {
             AccountId = 0,
             AccountName = "All Accounts",
+            AccountType = null,
             TotalIncome = summaries.Sum(a => a.TotalIncome),
             TotalExpense = summaries.Sum(a => a.TotalExpense),
             Balance = netWorth
@@ -317,6 +318,7 @@ public class AccountsController : ControllerBase
         {
             AccountId = account.Id,
             AccountName = account.Name,
+            AccountType = account.Type,
             TotalIncome = income,
             TotalExpense = expense,
             Balance = balance

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { AccountType } from "@/types/accounts/AccountType";
+import { AccountType } from "@/enums/AccountType";
 import { currencies } from "@/types/accounts/Currencies";
 
 import { GetAccount } from "@/services/account.service";
