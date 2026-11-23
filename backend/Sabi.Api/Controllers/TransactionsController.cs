@@ -57,7 +57,9 @@ public class TransactionsController : ControllerBase
             return BadRequest("End date is out of supported range");
         }
 
+        
         // Normal transactions
+
         var transactionsQuery = _context.Transactions
             .Where(t => !t.IsDeleted);
 
@@ -69,11 +71,6 @@ public class TransactionsController : ControllerBase
         {
             transactionsQuery = transactionsQuery.Where(t => t.CategoryId == categoryId.Value);
         }
-        if (type.HasValue)
-        {
-            transactionsQuery = transactionsQuery.Where(t => t.Type == type.Value);
-        }
-
         if (startDate.HasValue)
         {
             var start = startDate.Value.Date;
@@ -102,11 +99,6 @@ public class TransactionsController : ControllerBase
         {
             creditPaymentsQuery = creditPaymentsQuery.Where(cp => false);
         }
-
-        if (type.HasValue)
-        {
-            creditPaymentsQuery = creditPaymentsQuery.Where(cp => false);
-        }
         if (startDate.HasValue)
         {
             var start = startDate.Value.Date;
@@ -116,6 +108,19 @@ public class TransactionsController : ControllerBase
         {
             var exclusiveEnd = endDate.Value.Date.AddDays(1);
             creditPaymentsQuery = creditPaymentsQuery.Where(cp => cp.PaymentDate <= exclusiveEnd);
+        }
+
+        if (type.HasValue)
+        {
+            if (type.Value == TransactionType.Credit)
+            {
+                transactionsQuery = transactionsQuery.Where(t => false);
+            }
+            else
+            {
+                transactionsQuery = transactionsQuery.Where(t => t.Type == type.Value);
+                creditPaymentsQuery = creditPaymentsQuery.Where(cp => false);
+            }
         }
 
         var transactionCount = await transactionsQuery.CountAsync();
@@ -130,25 +135,25 @@ public class TransactionsController : ControllerBase
         var recordsToFetch = page * pageSize;
 
         var transactions = await transactionsQuery
-        .OrderByDescending(t => t.TransactionDate)
-        .ThenByDescending(t => t.Id)
-        .Take(recordsToFetch)
-        .Select(t => new TransactionHistoryResponseDto
-        {
-            Id = t.Id,
-            RecordType = "Transaction",
-            Type = t.Type.ToString(),
-            Amount = t.Amount,
-            Description = t.Description,
-            TransactionDate = t.TransactionDate,
+            .OrderByDescending(t => t.TransactionDate)
+            .ThenByDescending(t => t.Id)
+            .Take(recordsToFetch)
+            .Select(t => new TransactionHistoryResponseDto
+            {
+                Id = t.Id,
+                RecordType = "Transaction",
+                Type = t.Type.ToString(),
+                Amount = t.Amount,
+                Description = t.Description,
+                TransactionDate = t.TransactionDate,
 
-            AccountId = t.AccountId,
-            AccountName = t.Account.Name,
-            IsAccountDeleted = t.Account.IsDeleted,
+                AccountId = t.AccountId,
+                AccountName = t.Account.Name,
+                IsAccountDeleted = t.Account.IsDeleted,
 
-            CategoryId = t.CategoryId,
-            CategoryName = t.Category.Name
-        })
+                CategoryId = t.CategoryId,
+                CategoryName = t.Category.Name
+            })
         .ToListAsync();
 
         var creditPayments = await creditPaymentsQuery

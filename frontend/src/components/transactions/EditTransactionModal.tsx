@@ -76,6 +76,10 @@ export default function EditTransactionModal({
         (account) => account.type !== AccountType.CreditAccount
     );
 
+    const categoriesList = categories.filter(
+        (category) => category.type == transactionType
+    )
+
     const selectedAccount = accounts.find(
         account => account.id === accountId
     );
@@ -246,6 +250,14 @@ export default function EditTransactionModal({
         if (isBusy) return;
         resetForm();
         onClose();
+    }
+
+    function handleTransactionTypeChange(newType: number) {
+        if (newType !== transactionType) {
+            setCategoryId(null);
+        }
+
+        setTransactionType(newType);
     }
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -455,7 +467,7 @@ export default function EditTransactionModal({
                                             <button
                                                 key={item.id}
                                                 type="button"
-                                                onClick={() => setTransactionType(item.id)}
+                                                onClick={() => handleTransactionTypeChange(item.id)}
                                                 disabled={
                                                     (recordType == "CreditPayment" && item.id != 3) ||
                                                     (recordType == "Transaction" && item.id == 3)
@@ -480,7 +492,7 @@ export default function EditTransactionModal({
                         </div>
                         <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
                             {isCreditPayment ? (
-                                <div>
+                                <div className="flex flex-col gap-2">
                                     <div className="space-y-4">
                                         <h3 className="text-sm font-semibold">
                                             Credit Payment Details
@@ -571,7 +583,7 @@ export default function EditTransactionModal({
                                     </div>
                                 </div>
                             ) : (
-                                <div>
+                                <div className="flex flex-col gap-2">
                                     <div className="space-y-4">
                                         <h3 className="text-sm font-semibold">
                                             Transaction Details
@@ -596,7 +608,7 @@ export default function EditTransactionModal({
                                                     id="category"
                                                     name="category"
                                                     label="Category"
-                                                    options={categories.map((item) => ({
+                                                    options={categoriesList.map((item) => ({
                                                         value: item.id,
                                                         label: item.name,
                                                     }))}
@@ -642,9 +654,7 @@ export default function EditTransactionModal({
                                                         className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                                                         value={
                                                             isPhysicalCash
-                                                                ? (transactionType === TransactionTypeEnum.Income
-                                                                    ? cashTotal
-                                                                    : -cashTotal
+                                                                ? (cashTotal
                                                                 ).toFixed(2)
                                                                 : initialAmount
                                                         }
