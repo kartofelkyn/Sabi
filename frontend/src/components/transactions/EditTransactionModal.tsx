@@ -654,9 +654,14 @@ export default function EditTransactionModal({
                                                         className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                                                         value={
                                                             isPhysicalCash
-                                                                ? (cashTotal
-                                                                ).toFixed(2)
-                                                                : initialAmount
+                                                                ? (transactionType === TransactionTypeEnum.Expense
+                                                                    ? (cashTotal * -1).toFixed(2)
+                                                                    : cashTotal.toFixed(2))
+                                                                : transactionType === TransactionTypeEnum.Expense
+                                                                    ? initialAmount
+                                                                        ? (Math.abs(Number(initialAmount)) * -1).toString()
+                                                                        : ""
+                                                                    : initialAmount
                                                         }
                                                         disabled={isPhysicalCash}
                                                         readOnly={isPhysicalCash}
