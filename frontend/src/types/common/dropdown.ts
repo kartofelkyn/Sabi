@@ -8,4 +8,5 @@ export interface AccountsDropdown {
 export interface CategoriesDropdown {
     id: number;
     name: string;
+    type: number;
 }

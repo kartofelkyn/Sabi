@@ -152,12 +152,16 @@ export default function DeleteTransactionModal({
                                         <div className="flex justify-between">
                                             <span className="text-muted-foreground">Amount</span>
                                             <span
-                                                className={`${selectedTransaction?.transactionType === "Income"
-                                                        ? "text-income"
-                                                        : "text-expense"
-                                                    } font-semibold`}
+                                                className={`
+                                                    ${selectedTransaction?.transactionType == null
+                                                        ? "text-primary"
+                                                        : selectedTransaction.transactionType === "Income"
+                                                            ? "text-income"
+                                                            : "text-expense"} 
+                                                    font-semibold `}
                                             >
-                                                ₱ {selectedTransaction?.amount.toLocaleString("en-PH", {
+                                                {selectedTransaction?.transactionType === "Expense" ? "-" : ""}₱
+                                                {selectedTransaction?.amount.toLocaleString("en-PH", {
                                                     minimumFractionDigits: 2,
                                                     maximumFractionDigits: 2,
                                                 }) ?? "0.00"}

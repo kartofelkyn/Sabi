@@ -17,20 +17,14 @@ import type { CreateCreditPaymentDto } from "@/types/creditPayment/CreateCreditP
 import type { EditCreditPaymentDto } from "@/types/creditPayment/EditCreditPaymentDto";
 import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
 import type { SelectedTransactionDto } from "@/types/transactions/SelectedTransactionDto";
-import { TransactionTypeEnum } from "@/enums/transaction-type";
 
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from "@/services/transaction.service";
 import { createCreditPayment, updateCreditPayment, deleteCreditPayment } from "@/services/creditPayment.service";
 import { getFinanceSummary } from "@/services/finance.service";
 import { getAccountsDropdown, getCategoriesDropdown } from "@/services/common/dropdown.service";
-import {
-  Edit,
-  Trash,
-  Plus,
-  ChevronRight,
-  ChevronLeft
-} from "lucide-react";
+import { Edit, Trash, Plus, ChevronRight, ChevronLeft } from "lucide-react";
 import { EditTransactionDto } from "@/types/transactions/EditTransactionDto";
+import { sleep } from "@/utils/sleep";
 
 export default function TransactionsPage() {
   const [accountOptions, setAccountOptions] = useState<AccountsDropdown[] | null>(null);
@@ -204,6 +198,8 @@ export default function TransactionsPage() {
     let isActive = true;
 
     async function loadTransactions() {
+      const startTime = Date.now();
+
       try {
         setIsTransactionLoading(true);
         setTransactionError(null);
@@ -233,6 +229,10 @@ export default function TransactionsPage() {
         }
       } finally {
         if (isActive) {
+          const elapsed = Date.now() - startTime;
+          const remaining = Math.max(0, 200 - elapsed);
+
+          await sleep(remaining);
           setIsTransactionLoading(false);
         }
       }
@@ -252,9 +252,6 @@ export default function TransactionsPage() {
     currentPage,
     pageSize
   ])
-  useEffect(() => {
-    console.log("Transaction list:", transactionList);
-  }, [transactionList]);
 
   // Reset page if filtered
   const handleAccountChange = (value: number | null) => {
@@ -277,9 +274,10 @@ export default function TransactionsPage() {
     setCurrentPage(1);
   };
 
-  async function handleCreateTransaction(data: CreateTransactionDto) {
+  async function updateTransactionList() {
+    const startTime = Date.now();
 
-    await createTransaction(data);
+    setIsTransactionLoading(true);
 
     const updatedTransactions = await getTransactions({
       accountId: accountId ?? undefined,
@@ -294,24 +292,25 @@ export default function TransactionsPage() {
     setTransactionList(updatedTransactions.data);
     setTotalCount(updatedTransactions.totalCount);
     setTotalPages(updatedTransactions.totalPages);
+    
+    const elapsed = Date.now() - startTime;
+    const remaining = Math.max(0, 200 - elapsed);
+
+    await sleep(remaining);
+    setIsTransactionLoading(false);
+  }
+
+  async function handleCreateTransaction(data: CreateTransactionDto) {
+
+    await createTransaction(data);
+
+    updateTransactionList();
   }
 
   async function handleCreateCreditPayment(data: CreateCreditPaymentDto) {
     await createCreditPayment(data);
 
-    const updatedTransactions = await getTransactions({
-      accountId: accountId ?? undefined,
-      categoryId: categoryId ?? undefined,
-      type: transactionType ?? undefined,
-      startDate: startDate?.toISOString(),
-      endDate: endDate?.toISOString(),
-      page: currentPage,
-      pageSize
-    })
-
-    setTransactionList(updatedTransactions.data);
-    setTotalCount(updatedTransactions.totalCount);
-    setTotalPages(updatedTransactions.totalPages);
+    updateTransactionList();
   }
 
   async function handleEditTransaction(data: EditTransactionDto) {
@@ -320,19 +319,7 @@ export default function TransactionsPage() {
 
     await updateTransaction(selectedTransaction.id, data);
 
-    const updatedTransactions = await getTransactions({
-      accountId: accountId ?? undefined,
-      categoryId: categoryId ?? undefined,
-      type: transactionType ?? undefined,
-      startDate: startDate?.toISOString(),
-      endDate: endDate?.toISOString(),
-      page: currentPage,
-      pageSize
-    })
-
-    setTransactionList(updatedTransactions.data);
-    setTotalCount(updatedTransactions.totalCount);
-    setTotalPages(updatedTransactions.totalPages);
+    updateTransactionList();
   }
 
   async function handleEditCreditPayment(data: EditCreditPaymentDto) {
@@ -342,20 +329,9 @@ export default function TransactionsPage() {
 
     await updateCreditPayment(selectedTransaction.id, data);
 
-    const updatedTransactions = await getTransactions({
-      accountId: accountId ?? undefined,
-      categoryId: categoryId ?? undefined,
-      type: transactionType ?? undefined,
-      startDate: startDate?.toISOString(),
-      endDate: endDate?.toISOString(),
-      page: currentPage,
-      pageSize
-    })
-
-    setTransactionList(updatedTransactions.data);
-    setTotalCount(updatedTransactions.totalCount);
-    setTotalPages(updatedTransactions.totalPages);
+    updateTransactionList();
   }
+
   async function removeTransaction() {
     if (selectedTransaction === null) return;
     if (selectedTransaction.id === null || selectedTransaction.id < 0) return;
@@ -368,19 +344,7 @@ export default function TransactionsPage() {
       return;
     }
 
-    const updatedTransactions = await getTransactions({
-      accountId: accountId ?? undefined,
-      categoryId: categoryId ?? undefined,
-      type: transactionType ?? undefined,
-      startDate: startDate?.toISOString(),
-      endDate: endDate?.toISOString(),
-      page: currentPage,
-      pageSize
-    })
-
-    setTransactionList(updatedTransactions.data);
-    setTotalCount(updatedTransactions.totalCount);
-    setTotalPages(updatedTransactions.totalPages);
+    updateTransactionList();
   }
 
   return (

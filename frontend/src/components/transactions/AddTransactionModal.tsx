@@ -70,6 +70,10 @@ export default function AddTransactionModal({
         (account) => account.type !== AccountType.CreditAccount
     );
 
+    const categoriesList = categories.filter(
+        (category) => category.type == transactionType
+    )
+
     const selectedAccount = accounts.find(
         (account) => account.id === accountId
     );
@@ -109,6 +113,10 @@ export default function AddTransactionModal({
         setCashQuantities({});
         setInitialAmount("");
     }, [accountId]);
+
+    useEffect(() => {
+        setCategoryId(null);
+    }, [transactionType]);
 
     if (!isOpen) return null;
 
@@ -170,7 +178,7 @@ export default function AddTransactionModal({
 
             if (isPhysicalCash) {
                 const quantities = Object.values(cashQuantities).map(Number);
-                
+
                 if (quantities.some(quantity => !Number.isFinite(quantity))) {
                     return setError("Invalid denomination quantity.");
                 }
@@ -355,7 +363,7 @@ export default function AddTransactionModal({
                         </div>
                         <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
                             {isCreditPayment ? (
-                                <div>
+                                <div className="flex flex-col gap-2">
                                     <div className="space-y-4">
                                         <h3 className="text-sm font-semibold">
                                             Credit Payment Details
@@ -446,7 +454,7 @@ export default function AddTransactionModal({
                                     </div>
                                 </div>
                             ) : (
-                                <div>
+                                <div className="flex flex-col gap-2">
                                     <div className="space-y-4">
                                         <h3 className="text-sm font-semibold">
                                             Transaction Details
@@ -471,7 +479,7 @@ export default function AddTransactionModal({
                                                     id="category"
                                                     name="category"
                                                     label="Category"
-                                                    options={categories.map((item) => ({
+                                                    options={categoriesList.map((item) => ({
                                                         value: item.id,
                                                         label: item.name,
                                                     }))}
@@ -517,11 +525,14 @@ export default function AddTransactionModal({
                                                         className={`${fieldClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                                                         value={
                                                             isPhysicalCash
-                                                                ? (transactionType === TransactionTypeEnum.Income
-                                                                    ? cashTotal
-                                                                    : -cashTotal
-                                                                ).toFixed(2)
-                                                                : initialAmount
+                                                                ? (transactionType === TransactionTypeEnum.Expense
+                                                                    ? (cashTotal * -1).toFixed(2)
+                                                                    : cashTotal.toFixed(2))
+                                                                : transactionType === TransactionTypeEnum.Expense
+                                                                    ? initialAmount
+                                                                        ? (Math.abs(Number(initialAmount)) * -1).toString()
+                                                                        : ""
+                                                                    : initialAmount
                                                         }
                                                         disabled={isPhysicalCash}
                                                         readOnly={isPhysicalCash}

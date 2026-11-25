@@ -22,6 +22,8 @@ import { GetAccountTransaction } from "@/services/account.service";
 
 import { SquarePen, CreditCardPlus, Eye } from "lucide-react";
 
+import { sleep } from "@/utils/sleep";
+
 export default function AccountsPage() {
   const [accountList, setAccountList] = useState<AccountSummary[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
@@ -96,6 +98,8 @@ export default function AccountsPage() {
   useEffect(() => {
     if (selectedAccountId === null) return;
 
+    const startTime = Date.now();
+
     let isActive = true;
 
     async function loadTransactions() {
@@ -120,6 +124,10 @@ export default function AccountsPage() {
         }
       } finally {
         if (isActive) {
+          const elapsed = Date.now() - startTime;
+          const remaining = Math.max(0, 200 - elapsed);
+
+          await sleep(remaining);
           setIsTransactionLoading(false);
         }
       }
@@ -360,7 +368,13 @@ export default function AccountsPage() {
                       Loading accounts...
                     </td>
                   </tr>
-                ) : transactionError ? (
+                ) : isTransactionLoading ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-10 text-center text-sm text-expense">
+                      Loading transactions...
+                    </td>
+                  </tr>
+                ): transactionError ? (
                   <tr>
                     <td colSpan={4} className="px-4 py-10 text-center text-sm text-expense">
                       {transactionError}
