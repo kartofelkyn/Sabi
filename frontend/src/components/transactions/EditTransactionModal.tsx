@@ -315,7 +315,9 @@ export default function EditTransactionModal({
                 ? (transactionType === TransactionTypeEnum.Income
                     ? cashTotal
                     : -cashTotal)
-                : Number(initialAmount);
+                : (transactionType === TransactionTypeEnum.Income
+                    ? Number(initialAmount)
+                    : -Number(initialAmount));
 
             if (
                 (!isPhysicalCash && initialAmount.trim() === "") ||

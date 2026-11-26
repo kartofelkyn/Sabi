@@ -164,16 +164,18 @@ export default function AddTransactionModal({
             }
 
             const amount = isPhysicalCash
-                ? (transactionType == TransactionTypeEnum.Income
+                ? (transactionType === TransactionTypeEnum.Income
                     ? cashTotal
                     : -cashTotal)
-                : Number(initialAmount);
+                : (transactionType === TransactionTypeEnum.Income
+                    ? Number(initialAmount)
+                    : -Number(initialAmount));
 
             if (
                 !Number.isFinite(amount) ||
                 amount <= 0
             ) {
-                return setError("Enter an amount greater than zero.");
+                return setError(`Enter an amount greater than zero.`);
             }
 
             if (isPhysicalCash) {
