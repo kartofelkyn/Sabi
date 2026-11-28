@@ -13,7 +13,7 @@ public class UpdateTransactionDto
     [EnumDataType(typeof(TransactionType))]
     public TransactionType Type { get; set; }
 
-    [Range(typeof(decimal), "0.01", "9999999999999999.99")]
+    [Range(typeof(decimal), "-9999999999999999.99", "9999999999999999.99")]
     public decimal Amount { get; set; }
 
     [StringLength(500)]

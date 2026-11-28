@@ -56,67 +56,144 @@ public class TransactionsController : ControllerBase
         {
             return BadRequest("End date is out of supported range");
         }
-        IQueryable<Transaction> query = _context.Transactions
-            .Where(t => t.IsDeleted == false)
-            .AsNoTracking();
+
+        
+        // Normal transactions
+
+        var transactionsQuery = _context.Transactions
+            .Where(t => !t.IsDeleted);
 
         if (accountId.HasValue)
         {
-            query = query.Where(t => t.AccountId == accountId.Value);
+            transactionsQuery = transactionsQuery.Where(t => t.AccountId == accountId.Value);
         }
         if (categoryId.HasValue)
         {
-            query = query.Where(t => t.CategoryId == categoryId.Value);
-        }
-        if (type.HasValue)
-        {
-            query = query.Where(t => t.Type == type.Value);
+            transactionsQuery = transactionsQuery.Where(t => t.CategoryId == categoryId.Value);
         }
         if (startDate.HasValue)
         {
             var start = startDate.Value.Date;
-            query = query.Where(t => t.TransactionDate >= start);
+            transactionsQuery = transactionsQuery.Where(t => t.TransactionDate >= start);
         }
         if (endDate.HasValue)
         {
             var exclusiveEnd = endDate.Value.Date.AddDays(1);
-            query = query.Where(t => t.TransactionDate < exclusiveEnd);
+            transactionsQuery = transactionsQuery.Where(t => t.TransactionDate < exclusiveEnd);
         }
 
-        int totalCount = await query.CountAsync();
+        // Credit Transactions
 
-        int totalPages = (int)Math.Ceiling(
+        var creditPaymentsQuery = _context.CreditPayments
+            .Where(cp => !cp.IsDeleted);
+
+        if (accountId.HasValue)
+        {
+            creditPaymentsQuery = creditPaymentsQuery.Where(cp =>
+                cp.SourceAccountId == accountId ||
+                cp.CreditAccountId == accountId
+            );
+        }
+
+        if (categoryId.HasValue)
+        {
+            creditPaymentsQuery = creditPaymentsQuery.Where(cp => false);
+        }
+        if (startDate.HasValue)
+        {
+            var start = startDate.Value.Date;
+            creditPaymentsQuery = creditPaymentsQuery.Where(cp => cp.PaymentDate >= start);
+        }
+        if (endDate.HasValue)
+        {
+            var exclusiveEnd = endDate.Value.Date.AddDays(1);
+            creditPaymentsQuery = creditPaymentsQuery.Where(cp => cp.PaymentDate <= exclusiveEnd);
+        }
+
+        if (type.HasValue)
+        {
+            if (type.Value == TransactionType.Credit)
+            {
+                transactionsQuery = transactionsQuery.Where(t => false);
+            }
+            else
+            {
+                transactionsQuery = transactionsQuery.Where(t => t.Type == type.Value);
+                creditPaymentsQuery = creditPaymentsQuery.Where(cp => false);
+            }
+        }
+
+        var transactionCount = await transactionsQuery.CountAsync();
+        var creditPaymentCount = await creditPaymentsQuery.CountAsync();
+
+        var totalCount = transactionCount + creditPaymentCount;
+
+        var totalPages = (int)Math.Ceiling(
             (double)totalCount / pageSize
         );
 
-        var transactions = await query
+        var recordsToFetch = page * pageSize;
+
+        var transactions = await transactionsQuery
+            .OrderByDescending(t => t.TransactionDate)
+            .ThenByDescending(t => t.Id)
+            .Take(recordsToFetch)
+            .Select(t => new TransactionHistoryResponseDto
+            {
+                Id = t.Id,
+                RecordType = "Transaction",
+                Type = t.Type.ToString(),
+                Amount = t.Amount,
+                Description = t.Description,
+                TransactionDate = t.TransactionDate,
+
+                AccountId = t.AccountId,
+                AccountName = t.Account.Name,
+                IsAccountDeleted = t.Account.IsDeleted,
+
+                CategoryId = t.CategoryId,
+                CategoryName = t.Category.Name
+            })
+        .ToListAsync();
+
+        var creditPayments = await creditPaymentsQuery
+            .OrderByDescending(cp => cp.PaymentDate)
+            .ThenByDescending(cp => cp.Id)
+            .Take(recordsToFetch)
+            .Select(cp => new TransactionHistoryResponseDto
+            {
+                Id = cp.Id,
+                RecordType = "CreditPayment",
+                Type = "CreditPayment",
+                Amount = cp.Amount,
+                Description = cp.Description,
+                TransactionDate = cp.PaymentDate,
+
+                SourceAccountId = cp.SourceAccountId,
+                SourceAccountName = cp.SourceAccount.Name,
+                IsSourceAccountDeleted = cp.SourceAccount.IsDeleted,
+
+                CreditAccountId = cp.CreditAccountId,
+                CreditAccountName = cp.CreditAccount.Name,
+                IsCreditAccountDeleted = cp.CreditAccount.IsDeleted
+            })
+            .ToListAsync();
+
+        var combinedRecords = transactions
+            .Concat(creditPayments)
             .OrderByDescending(t => t.TransactionDate)
             .ThenByDescending(t => t.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(t => new TransactionResponseDto
-            {
-                Id = t.Id,
-                AccountId = t.AccountId,
-                AccountName = t.Account.Name,
-                IsAccountDeleted = t.Account.IsDeleted,
-                CategoryId = t.CategoryId,
-                CategoryName = t.Category.Name,
-                Type = t.Type,
-                Amount = t.Amount,
-                Description = t.Description,
-                TransactionDate = t.TransactionDate,
-                CreatedAt = t.CreatedAt
-            })
-            .ToListAsync();
+            .ToList();
 
-        var response = new PagedResponseDto<TransactionResponseDto>
+        var response = new PagedResponseDto<TransactionHistoryResponseDto>
         {
             Page = page,
             PageSize = pageSize,
             TotalCount = totalCount,
             TotalPages = totalPages,
-            Data = transactions
+            Data = combinedRecords
         };
 
         return Ok(response);
@@ -199,9 +276,20 @@ public class TransactionsController : ControllerBase
                 return BadRequest("Physical Cash transactions require cash denominations.");
             }
 
-            if (cashDenominations.Any(item => item.Quantity <= 0))
+            if (request.Type == TransactionType.Income)
             {
-                return BadRequest("Cash denomination quantities must be greater than zero.");
+                if (cashDenominations.Any(item => item.Quantity < 0))
+                {
+                    return BadRequest("Cash denomination quantities cannot be negative.");
+                }
+            }
+
+            if (request.Type == TransactionType.Expense)
+            {
+                if (cashDenominations.All(item => item.Quantity == 0))
+                {
+                    return BadRequest("At least one denomination must have a non-zero quantity.");
+                }
             }
 
             if (cashDenominations.Any(item => !Denominations.Contains(item.DenominationValue)))
@@ -218,9 +306,13 @@ public class TransactionsController : ControllerBase
                 item => item.DenominationValue * item.Quantity
             );
 
-            if (request.Amount != total)
+            decimal expectedTotal = request.Type == TransactionType.Income
+                ? request.Amount
+                : -request.Amount;
+
+            if (total != expectedTotal)
             {
-                return BadRequest("Amount does not match the total of the cash denominations.");
+                return BadRequest("Total amount does not match the total of the cash denominations.");
             }
         }
         else if (request.CashDenomation != null && request.CashDenomation.Any())
@@ -244,18 +336,24 @@ public class TransactionsController : ControllerBase
                 {
                     foreach (var item in cashDenominations)
                     {
-                        var existingDenomination = accountCashDenominations
+                        if (item.Quantity < 0)
+                        {
+                            var existingDenomination = accountCashDenominations
                             .FirstOrDefault(c => c.DenominationValue == item.DenominationValue);
 
-                        if (existingDenomination == null ||
-                            existingDenomination.Quantity < item.Quantity)
-                        {
-                            await dbTransaction.RollbackAsync();
+                            var requiredQuantity = Math.Abs(item.Quantity);
 
-                            return BadRequest(
-                                $"Insufficient quantity for denomination {item.DenominationValue}."
-                            );
+                            if (existingDenomination == null ||
+                                existingDenomination.Quantity < requiredQuantity)
+                            {
+                                await dbTransaction.RollbackAsync();
+
+                                return BadRequest(
+                                    $"Insufficient quantity for denomination {item.DenominationValue}."
+                                );
+                            }
                         }
+
                     }
                 }
             }
@@ -297,28 +395,21 @@ public class TransactionsController : ControllerBase
                         .FirstOrDefault(c =>
                             c.DenominationValue == item.DenominationValue
                         );
-
-                    if (request.Type == TransactionType.Income)
+                    if (existingDenomination != null)
                     {
-                        if (existingDenomination != null)
-                        {
-                            existingDenomination.Quantity += item.Quantity;
-                        }
-                        else
-                        {
-                            var newDenomination = new CashDenomination
-                            {
-                                AccountId = request.AccountId,
-                                DenominationValue = item.DenominationValue,
-                                Quantity = item.Quantity
-                            };
-
-                            _context.CashDenominations.Add(newDenomination);
-                        }
+                        existingDenomination.Quantity += item.Quantity;
                     }
-                    else if (request.Type == TransactionType.Expense)
+                    else if (item.Quantity > 0)
                     {
-                        existingDenomination!.Quantity -= item.Quantity;
+                        var newDenomination = new CashDenomination
+                        {
+                            AccountId = request.AccountId,
+                            DenominationValue = item.DenominationValue,
+                            Quantity = item.Quantity
+                        };
+
+                        _context.CashDenominations.Add(newDenomination);
+                        accountCashDenominations.Add(newDenomination);
                     }
                 }
             }
@@ -440,43 +531,57 @@ public class TransactionsController : ControllerBase
 
         try
         {
+
             if (isOriginalAccountPhysical)
             {
                 foreach (var oldCashDenomination in transaction.TransactionCashDenominations)
                 {
                     var existingDenomination = originalAccountCurrentCashDenominations
-                        .FirstOrDefault(e => e.DenominationValue == oldCashDenomination.DenominationValue);
+                        .FirstOrDefault(e =>
+                            e.DenominationValue == oldCashDenomination.DenominationValue
+                        );
 
-                    if (transaction.Type == TransactionType.Income)
+                    // Reverse the original signed movement.
+                    int reversedQuantity = -oldCashDenomination.Quantity;
+
+                    if (existingDenomination != null)
                     {
-                        if (existingDenomination == null || existingDenomination.Quantity < oldCashDenomination.Quantity)
+                        int resultingQuantity =
+                            existingDenomination.Quantity + reversedQuantity;
+
+                        if (resultingQuantity < 0)
                         {
                             await dbTransaction.RollbackAsync();
 
                             return BadRequest(
-                                    $"Insufficient quantity for denomination {oldCashDenomination.DenominationValue}."
-                                );
+                                $"Insufficient quantity to reverse denomination {oldCashDenomination.DenominationValue}."
+                            );
                         }
 
-                        existingDenomination.Quantity -= oldCashDenomination.Quantity;
+                        existingDenomination.Quantity = resultingQuantity;
                     }
                     else
                     {
-                        if (existingDenomination == null)
+                        if (reversedQuantity < 0)
+                        {
+                            await dbTransaction.RollbackAsync();
+
+                            return BadRequest(
+                                $"Insufficient quantity to reverse denomination {oldCashDenomination.DenominationValue}."
+                            );
+                        }
+
+                        if (reversedQuantity > 0)
                         {
                             var newDenomination = new CashDenomination
                             {
                                 AccountId = originalAccount.Id,
                                 DenominationValue = oldCashDenomination.DenominationValue,
-                                Quantity = oldCashDenomination.Quantity
+                                Quantity = reversedQuantity
                             };
 
                             _context.CashDenominations.Add(newDenomination);
                             originalAccountCurrentCashDenominations.Add(newDenomination);
-                        }
-                        else
-                        {
-                            existingDenomination.Quantity += oldCashDenomination.Quantity;
                         }
                     }
                 }
@@ -493,18 +598,34 @@ public class TransactionsController : ControllerBase
 
                     return BadRequest("Physical Cash transactions require cash denominations.");
                 }
-                if (cashDenominations.Any(item => item.Quantity <= 0))
-                {
-                    await dbTransaction.RollbackAsync();
 
-                    return BadRequest("Cash denomination quantities must be greater than zero.");
+                if (request.Type == TransactionType.Income)
+                {
+                    if (cashDenominations.Any(item => item.Quantity < 0))
+                    {
+                        await dbTransaction.RollbackAsync();
+
+                        return BadRequest("Cash denomination quantities cannot be negative.");
+                    }
                 }
+
+                if (request.Type == TransactionType.Expense)
+                {
+                    if (cashDenominations.All(item => item.Quantity == 0))
+                    {
+                        await dbTransaction.RollbackAsync();
+
+                        return BadRequest("At least one denomination must have a non-zero quantity.");
+                    }
+                }
+
                 if (cashDenominations.Any(item => !Denominations.Contains(item.DenominationValue)))
                 {
                     await dbTransaction.RollbackAsync();
 
                     return BadRequest("Invalid cash denomination.");
                 }
+
                 if (cashDenominations.GroupBy(item => item.DenominationValue).Any(group => group.Count() > 1))
                 {
                     await dbTransaction.RollbackAsync();
@@ -516,7 +637,11 @@ public class TransactionsController : ControllerBase
                     item => item.DenominationValue * item.Quantity
                 );
 
-                if (request.Amount != total)
+                decimal expectedTotal = request.Type == TransactionType.Income
+                    ? request.Amount
+                    : -request.Amount;
+
+                if (expectedTotal != total)
                 {
                     await dbTransaction.RollbackAsync();
 
@@ -527,16 +652,21 @@ public class TransactionsController : ControllerBase
                 {
                     foreach (var newCashDenomination in cashDenominations)
                     {
-                        var existingDenomination = newCurrentCashDenominations
+                        if (newCashDenomination.Quantity < 0)
+                        {
+                            var existingDenomination = newCurrentCashDenominations
                             .FirstOrDefault(e => e.DenominationValue == newCashDenomination.DenominationValue);
 
-                        if (existingDenomination == null || existingDenomination.Quantity < newCashDenomination.Quantity)
-                        {
-                            await dbTransaction.RollbackAsync();
+                            var requiredQuantity = Math.Abs(newCashDenomination.Quantity);
 
-                            return BadRequest(
-                                    $"Insufficient quantity for denomination {newCashDenomination.DenominationValue}."
-                                );
+                            if (existingDenomination == null || existingDenomination.Quantity < requiredQuantity)
+                            {
+                                await dbTransaction.RollbackAsync();
+
+                                return BadRequest(
+                                        $"Insufficient quantity for denomination {newCashDenomination.DenominationValue}."
+                                    );
+                            }
                         }
                     }
                 }
@@ -577,28 +707,21 @@ public class TransactionsController : ControllerBase
 
                     _context.TransactionCashDenominations.Add(newTransactionDenomination);
 
-                    if (request.Type == TransactionType.Income)
+                    if (existingDenomination != null)
                     {
-                        if (existingDenomination != null)
-                        {
-                            existingDenomination.Quantity += item.Quantity;
-                        }
-                        else
-                        {
-                            var newDenomination = new CashDenomination
-                            {
-                                AccountId = newAccount.Id,
-                                DenominationValue = item.DenominationValue,
-                                Quantity = item.Quantity
-                            };
-
-                            _context.CashDenominations.Add(newDenomination);
-                            newCurrentCashDenominations.Add(newDenomination);
-                        }
+                        existingDenomination.Quantity += item.Quantity;
                     }
-                    else
+                    else if (item.Quantity > 0)
                     {
-                        existingDenomination!.Quantity -= item.Quantity;
+                        var newDenomination = new CashDenomination
+                        {
+                            AccountId = newAccount.Id,
+                            DenominationValue = item.DenominationValue,
+                            Quantity = item.Quantity
+                        };
+
+                        _context.CashDenominations.Add(newDenomination);
+                        newCurrentCashDenominations.Add(newDenomination);
                     }
                 }
 
@@ -617,8 +740,6 @@ public class TransactionsController : ControllerBase
             throw;
         }
     }
-
-    // Soft Delete: /api/transactions/{id}
 
     // Soft Delete: /api/transactions/{id}
     [HttpDelete("{id:int}")]
@@ -658,33 +779,42 @@ public class TransactionsController : ControllerBase
                             c.DenominationValue == item.DenominationValue
                         );
 
-                    if (transaction.Type == TransactionType.Income)
+                    int reversedQuantity = -item.Quantity;
+
+                    if (existingDenomination != null)
                     {
-                        if (existingDenomination == null ||
-                            existingDenomination.Quantity < item.Quantity)
+                        int resultingQuantity = existingDenomination.Quantity + reversedQuantity;
+
+                        if (resultingQuantity < 0)
                         {
                             await dbTransaction.RollbackAsync();
 
                             return BadRequest(
-                                $"Cannot delete transaction. Insufficient quantity for denomination {item.DenominationValue}."
+                                $"Insufficient quantity to reverse denomination {item.DenominationValue}."
                             );
                         }
-
-                        existingDenomination.Quantity -= item.Quantity;
-                    }
-                    else if (transaction.Type == TransactionType.Expense)
-                    {
-                        if (existingDenomination != null)
-                        {
-                            existingDenomination.Quantity += item.Quantity;
-                        }
                         else
+                        {
+                            existingDenomination.Quantity = resultingQuantity;
+                        }
+                    }
+                    else
+                    {
+                        if (reversedQuantity < 0)
+                        {
+                            await dbTransaction.RollbackAsync();
+
+                            return BadRequest(
+                                $"Insufficient quantity to reverse denomination {item.DenominationValue}."
+                            );
+                        }
+                        else if (reversedQuantity > 0)
                         {
                             var newDenomination = new CashDenomination
                             {
                                 AccountId = account.Id,
                                 DenominationValue = item.DenominationValue,
-                                Quantity = item.Quantity
+                                Quantity = reversedQuantity
                             };
 
                             _context.CashDenominations.Add(newDenomination);
@@ -709,7 +839,6 @@ public class TransactionsController : ControllerBase
             throw;
         }
     }
-
 
     // Reusable mapping
     private static TransactionResponseDto ToResponseDto(Transaction transaction)

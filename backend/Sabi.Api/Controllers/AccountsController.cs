@@ -175,7 +175,29 @@ public class AccountsController : ControllerBase
             )
             .SumAsync(t => t.Amount);
 
-        decimal currentBalance = account.InitialBalance + totalIncome - totalExpenses;
+        decimal totalCreditPayments = await _context.CreditPayments
+            .Where(c => !c.IsDeleted && c.SourceAccountId == id)
+            .SumAsync(c => c.Amount);
+
+        decimal totalCreditPaymentsReceived = await _context.CreditPayments
+            .Where(c => !c.IsDeleted && c.CreditAccountId == id)
+            .SumAsync(c => c.Amount);
+        decimal currentBalance;
+
+        if (account.Type == AccountType.Credit)
+        {
+            currentBalance = account.InitialBalance
+                + totalExpenses
+                - totalIncome
+                - totalCreditPaymentsReceived;
+        }
+        else
+        {
+            currentBalance = account.InitialBalance
+                + totalIncome
+                - totalExpenses
+                - totalCreditPayments;
+        }
 
         var response = new AccountBalanceDto
         {
@@ -198,46 +220,38 @@ public class AccountsController : ControllerBase
             .Include(a => a.Transactions)
             .ToListAsync();
 
-        var summaries = accounts.Select(account => MapToSummary(account)).ToList();
+        var creditPayments = await _context.CreditPayments
+            .AsNoTracking()
+            .Where(c => !c.IsDeleted)
+            .ToListAsync();
+
+        var summaries = accounts
+            .Select(account => MapToSummary(account, creditPayments))
+            .ToList();
+
+        var totalAssets = summaries
+            .Where(s => accounts.Any(a => a.Id == s.AccountId && a.Type != AccountType.Credit))
+            .Sum(s => s.Balance);
+
+        var totalLiabilities = summaries
+            .Where(s => accounts.Any(a => a.Id == s.AccountId && a.Type == AccountType.Credit))
+            .Sum(s => s.Balance);
+
+        var netWorth = totalAssets - totalLiabilities;
 
         var allAccounts = new AccountSummaryDto
         {
             AccountId = 0,
             AccountName = "All Accounts",
+            AccountType = null,
             TotalIncome = summaries.Sum(a => a.TotalIncome),
             TotalExpense = summaries.Sum(a => a.TotalExpense),
-            Balance = summaries.Sum(a => a.Balance)
+            Balance = netWorth
         };
 
         summaries.Insert(0, allAccounts);
 
         return Ok(summaries);
-    }
-
-    private AccountSummaryDto MapToSummary(Account account)
-    {
-        var initialBalance = account.InitialBalance;
-
-        var income = account.Transactions
-            .Where(t => t.Type == TransactionType.Income && !t.IsDeleted)
-            .Sum(t => t.Amount);
-
-        var expense = account.Transactions
-            .Where(t => t.Type == TransactionType.Expense && !t.IsDeleted)
-            .Sum(t => t.Amount);
-
-        var balance = initialBalance + income - expense;
-
-        var response = new AccountSummaryDto
-        {
-            AccountId = account.Id,
-            AccountName = account.Name,
-            TotalIncome = income,
-            TotalExpense = expense,
-            Balance = balance
-        };
-
-        return response;
     }
 
     // Get: /api/{id}/transactions
@@ -272,4 +286,46 @@ public class AccountsController : ControllerBase
 
         return Ok(transactions);
     }
+
+    private AccountSummaryDto MapToSummary(
+        Account account,
+        List<CreditPayment> creditPayments
+    )
+    {
+        var initialBalance = account.InitialBalance;
+
+        var income = account.Transactions
+            .Where(t => t.Type == TransactionType.Income && !t.IsDeleted)
+            .Sum(t => t.Amount);
+
+        var expense = account.Transactions
+            .Where(t => t.Type == TransactionType.Expense && !t.IsDeleted)
+            .Sum(t => t.Amount);
+
+        var totalCreditPayments = creditPayments
+            .Where(c => c.SourceAccountId == account.Id)
+            .Sum(c => c.Amount);
+
+        var totalCreditPaymentsReceived = creditPayments
+            .Where(c => c.CreditAccountId == account.Id)
+            .Sum(c => c.Amount);
+
+        var balance = account.Type == AccountType.Credit
+            ? initialBalance + expense - income - totalCreditPaymentsReceived
+            : initialBalance + income - expense - totalCreditPayments;
+
+        var response = new AccountSummaryDto
+        {
+            AccountId = account.Id,
+            AccountName = account.Name,
+            AccountType = account.Type,
+            TotalIncome = income,
+            TotalExpense = expense,
+            Balance = balance
+        };
+
+        return response;
+    }
+
+
 }

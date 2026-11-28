@@ -1,4 +1,30 @@
 import type { TransactionTypeEnum } from "@/enums/transaction-type";
+import type { TransactionTypeName } from "@/constants/transactions/transaction-type-options";
+
+export interface TransactionHistory {
+    id: number;
+    recordType: string;
+    accountId: number;
+    accountName: string;
+    isAccountDeleted: boolean;
+    sourceAccountId: number;
+    sourceAccountName: string;
+    isSourceAccountDeleted: boolean;
+    creditAccountId: number;
+    creditAccountName: string;
+    isCreditAccountDeleted: boolean;
+    categoryId: number;
+    categoryName: string;
+    type: TransactionTypeName;
+    amount: number;
+    description: string;
+    transactionDate: string;
+    createdAt: string;
+    cashDenomation: {
+        denominationValue: number;
+        quantity: number;
+    }[];
+}
 
 export interface Transaction {
     id: number;

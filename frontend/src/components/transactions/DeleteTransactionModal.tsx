@@ -2,19 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-import { getTransaction } from "@/services/transaction.service";
-
-import type { DeleteTransactionDto } from "@/types/transactions/DeleteTransactionDto";
 import type { Status } from "@/types/common/submitStatus";
 import type { SelectedTransactionDto } from "@/types/transactions/SelectedTransactionDto";
-import type { AccountsDropdown, CategoriesDropdown } from "@/types/common/dropdown";
-import { transactionTypeOptions } from "@/constants/transactions/transaction-type-options";
 
-import FormDropdown from "../common/FormDropdown";
 import { Spinner, CheckIcon, ErrorIcon } from "../common/FormSubmitIcon";
 import { sleep } from "@/utils/sleep";
-import { Transaction } from "@/types/transactions/TransactionType";
-
 
 interface DeleteTransactionModalProps {
     selectedTransaction: SelectedTransactionDto | null;
@@ -45,6 +37,8 @@ export default function DeleteTransactionModal({
     const [status, setStatus] = useState<Status>("idle");
 
     const isBusy = status === "loading" || status === "success";
+
+    const isCreditPayment = selectedTransaction?.recordType == "CreditPayment";
 
     useEffect(() => {
         if (!isOpen) return;
@@ -134,46 +128,88 @@ export default function DeleteTransactionModal({
                             </p>
 
                             <div className="mt-4 rounded-md border p-3 space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Account</span>
-                                    <span>{selectedTransaction?.accountName ?? "N/A"}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Category</span>
-                                    <span>{selectedTransaction?.categoryName ?? "N/A"}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Type</span>
-                                    <span>{selectedTransaction?.transactionType ?? "N/A"}</span>
-                                </div>
+                                {!isCreditPayment ? (
+                                    <>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Account</span>
+                                            <span>{selectedTransaction?.accountName ?? "N/A"}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Category</span>
+                                            <span>{selectedTransaction?.categoryName ?? "N/A"}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Type</span>
+                                            <span>{selectedTransaction?.transactionType ?? "N/A"}</span>
+                                        </div>
 
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Description</span>
-                                    <span className="text-right">
-                                        {selectedTransaction?.description || "No description"}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Amount</span>
-                                    <span
-                                        className={`
-                                            selectedTransaction?.transactionType === "Income"
-                                                ? "text-income"
-                                                : "text-expense" 
-                                            font-semibold    
-                                            `
-                                        }
-                                    >
-                                        ₱ {selectedTransaction?.amount.toLocaleString("en-PH", {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        }) ?? "0.00"}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Date</span>
-                                    <span>{selectedTransaction?.transactionDate.split("T")[0] ?? "N/A"}</span>
-                                </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Description</span>
+                                            <span className="text-right">
+                                                {selectedTransaction?.description || "No description"}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Amount</span>
+                                            <span
+                                                className={`
+                                                    ${selectedTransaction?.transactionType == null
+                                                        ? "text-primary"
+                                                        : selectedTransaction.transactionType === "Income"
+                                                            ? "text-income"
+                                                            : "text-expense"} 
+                                                    font-semibold `}
+                                            >
+                                                {selectedTransaction?.transactionType === "Expense" ? "-" : ""}₱
+                                                {selectedTransaction?.amount.toLocaleString("en-PH", {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                }) ?? "0.00"}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Date</span>
+                                            <span>{selectedTransaction?.transactionDate.split("T")[0] ?? "N/A"}</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Source Account</span>
+                                            <span>{selectedTransaction?.sourceAccountName ?? "N/A"}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Credit Account</span>
+                                            <span>{selectedTransaction?.creditAccountName ?? "N/A"}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Type</span>
+                                            <span>Credit Payment</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Description</span>
+                                            <span className="text-right">
+                                                {selectedTransaction?.description || "No description"}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Amount</span>
+                                            <span
+                                                className={`text-primary font-semibold `}
+                                            >
+                                                ₱ {selectedTransaction?.amount.toLocaleString("en-PH", {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                }) ?? "0.00"}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Payment Date</span>
+                                            <span>{selectedTransaction?.transactionDate.split("T")[0] ?? "N/A"}</span>
+                                        </div>
+                                    </>
+                                )}
+
                             </div>
 
                             <div className="mt-4">
